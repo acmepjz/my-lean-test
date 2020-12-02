@@ -308,9 +308,9 @@ begin
         rw hn at h3' ⊢,
         norm_cast at h3' ⊢,
         rw one_mul at h3',
-        rcases pow_coprime hpos3 haminusb h1234cop h3' with ⟨ a3, b3, ha3p, hb3p, hab3cop, ha3, hb3 ⟩,
-        rcases pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, b2, ha2p, hb2p, hab2cop, ha2, hb2 ⟩,
-        rcases pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
+        rcases int_pow_coprime hpos3 haminusb h1234cop h3' with ⟨ a3, b3, ha3p, hb3p, hab3cop, ha3, hb3 ⟩,
+        rcases int_pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, b2, ha2p, hb2p, hab2cop, ha2, hb2 ⟩,
+        rcases int_pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
         use [a1, b1, b2, b3, ha1],
         split, { ring, exact hb1, },
         use [hb2, hb3],
@@ -320,11 +320,11 @@ begin
         { rw hn, exact nat.prime_two, },
         exact hn.1,
       },
-      rcases pow_coprime_prime hpos3 haminusb h1234cop hnp h3' with
+      rcases int_pow_coprime_prime hpos3 haminusb h1234cop hnp h3' with
       ⟨ a3, b3, ha3p, hb3p, hab3cop, ⟨ ha3, hb3 ⟩ | ⟨ ha3, hb3 ⟩ ⟩, {
-        rcases pow_coprime_prime hpos2 haplusb h123cop hnp ha3 with
+        rcases int_pow_coprime_prime hpos2 haplusb h123cop hnp ha3 with
         ⟨ a2, b2, ha2p, hb2p, hab2cop, ⟨ ha2, hb2 ⟩ | ⟨ ha2, hb2 ⟩ ⟩, {
-          rcases pow_coprime_prime ha hb h12cop hnp ha2 with
+          rcases int_pow_coprime_prime ha hb h12cop hnp ha2 with
           ⟨ a1, b1, ha1p, hb1p, hab1cop, ⟨ ha1, hb1 ⟩ | ⟨ ha1, hb1 ⟩ ⟩, {
             exfalso,
             sorry,
@@ -333,13 +333,13 @@ begin
           },
         }, {
           exfalso,
-          rcases pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
+          rcases int_pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
           sorry,
         },
       }, {
         exfalso,
-        rcases pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, b2, ha2p, hb2p, hab2cop, ha2, hb2 ⟩,
-        rcases pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
+        rcases int_pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, b2, ha2p, hb2p, hab2cop, ha2, hb2 ⟩,
+        rcases int_pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
         sorry,
       },
     },

@@ -524,19 +524,61 @@ begin
   exact key c a b c (by linarith) hapos hbpos hcop h1,
 end
 
-lemma pow_coprime {a b c : ℤ} {n : ℕ}
+lemma int_pow_coprime_prime' {a b c : ℤ} {p n k : ℕ}
+(hapos : 0 < a) (hbpos : 0 < b) (hcop : a.gcd b = 1) (hp : nat.prime p) (h1 : a * b = p ^ k * c ^ n)
+: ∃ a' b' : ℤ, 0 < a' ∧ 0 < b' ∧ a'.gcd b' = 1
+∧ ((a = p ^ k * a' ^ n ∧ b = b' ^ n) ∨ (a = a' ^ n ∧ b = p ^ k * b' ^ n)) :=
+begin
+  have t1 := mul_pos hapos hbpos,
+  rw [h1, mul_pos_iff] at t1,
+  rcases t1 with ⟨ t1, t2 ⟩ | ⟨ t1, t2 ⟩, {
+    replace h1 : a.nat_abs * b.nat_abs = p ^ k * c.nat_abs ^ n := by {
+      zify,
+      repeat {rw ← int.abs_eq_nat_abs},
+      rw [pow_abs c n, abs_of_pos hapos, abs_of_pos hbpos, abs_of_pos t2],
+      exact h1,
+    },
+    have ta : 0 < a.nat_abs := by { zify, rw [← int.abs_eq_nat_abs, abs_of_pos hapos], exact hapos, },
+    have tb : 0 < b.nat_abs := by { zify, rw [← int.abs_eq_nat_abs, abs_of_pos hbpos], exact hbpos, },
+    rcases nat_pow_coprime_prime' ta tb hcop hp h1 with ⟨ a', b', ha'pos, hb'pos, hcop', h1' ⟩,
+    use [a', b'],
+    split, { norm_cast, exact ha'pos, },
+    split, { norm_cast, exact hb'pos, },
+    use hcop',
+    zify at h1',
+    repeat {rw ← int.abs_eq_nat_abs at h1'},
+    rw [abs_of_pos hapos, abs_of_pos hbpos] at h1',
+    exact h1',
+  },
+  exfalso,
+  have t3 := pow_pos (nat.prime.pos hp) k,
+  zify at t3,
+  linarith only [t1, t3],
+end
+
+lemma int_pow_coprime {a b c : ℤ} {n : ℕ}
 (hapos : 0 < a) (hbpos : 0 < b) (hcop : a.gcd b = 1) (h1 : a * b = c ^ n)
 : ∃ a' b' : ℤ, 0 < a' ∧ 0 < b' ∧ a'.gcd b' = 1 ∧ a = a' ^ n ∧ b = b' ^ n :=
 begin
-  sorry,
+  let p := 2,
+  have hp : nat.prime p := nat.prime_two,
+  replace h1 : a * b = p ^ 0 * c ^ n := by { rw h1, ring, },
+  rcases int_pow_coprime_prime' hapos hbpos hcop hp h1 with ⟨ a', b', ha'pos, hb'pos, hcop', h1' ⟩,
+  use [a', b', ha'pos, hb'pos, hcop'],
+  simp at h1',
+  exact h1',
 end
 
-lemma pow_coprime_prime {a b c : ℤ} {p n : ℕ}
+lemma int_pow_coprime_prime {a b c : ℤ} {p n : ℕ}
 (hapos : 0 < a) (hbpos : 0 < b) (hcop : a.gcd b = 1) (hp : nat.prime p) (h1 : a * b = p * c ^ n)
 : ∃ a' b' : ℤ, 0 < a' ∧ 0 < b' ∧ a'.gcd b' = 1
 ∧ ((a = p * a' ^ n ∧ b = b' ^ n) ∨ (a = a' ^ n ∧ b = p * b' ^ n)) :=
 begin
-  sorry,
+  replace h1 : a * b = p ^ 1 * c ^ n := by { rw h1, ring, },
+  rcases int_pow_coprime_prime' hapos hbpos hcop hp h1 with ⟨ a', b', ha'pos, hb'pos, hcop', h1' ⟩,
+  use [a', b', ha'pos, hb'pos, hcop'],
+  simp at h1',
+  exact h1',
 end
 
 lemma pythagorean_triple.coprime_classification_pos {x y z : ℤ}
