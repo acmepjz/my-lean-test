@@ -9,15 +9,15 @@ teach computer to do some mathematics BOOGITY BOOGITY
 
 #### 安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1.  Download Lean autonomous bundle (say) from https://leanprover-community.github.io/get_started.html
+2.  Overwrite the folder trylean/src/solutions with this repository. Now you should have the folder trylean/src/solutions/tests
+3.  BOOGITY BOOGITY
 
 #### 使用说明
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1.  Run trylean.bat
+2.  Navigate to src/solutions/tests/*.lean
+3.  BOOGITY BOOGITY
 
 #### 参与贡献
 
