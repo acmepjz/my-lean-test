@@ -637,3 +637,77 @@ begin
   },
   rwa [ha', hb', abs.stupid_mod_two a, abs.stupid_mod_two b],
 end
+
+lemma int_even_iff_sq_even (n : ℤ) : n % 2 = 0 ↔ n^2 % 2 = 0 :=
+begin
+  repeat {rw ← int.even_iff},
+  have := @int.even_pow n 2,
+  norm_num at this,
+  exact this.symm,
+end
+
+lemma int_odd_iff_sq_odd (n : ℤ) : n % 2 = 1 ↔ n^2 % 2 = 1 :=
+begin
+  repeat {rw ← int.mod_two_ne_zero},
+  exact not_congr (int_even_iff_sq_even n),
+end
+
+lemma int_even_sq_mod_4 (n : ℤ) (h : n % 2 = 0) : n^2 % 4 = 0 :=
+begin
+  let q := n / 2,
+  have t0 : n % 2 + 2 * q = n := int.mod_add_div n 2,
+  calc n^2 % 4 = (4 * q^2) % 4 : by { congr, rw [← t0, h], ring, }
+  ... = 0 : by { rw int.mul_mod_right, },
+end
+
+lemma int_odd_sq_mod_4 (n : ℤ) (h : n % 2 = 1) : n^2 % 4 = 1 :=
+begin
+  let q := n / 2,
+  have t0 : n % 2 + 2 * q = n := int.mod_add_div n 2,
+  calc n^2 % 4 = (4*(q^2+q)+1) % 4 : by { congr, rw [← t0, h], ring, }
+  ... = 1 : by { rw [int.add_mod, int.mul_mod_right], norm_num, },
+end
+
+lemma int_odd_sq_mod_8 (n : ℤ) (h : n % 2 = 1) : n^2 % 8 = 1 :=
+begin
+  let n' := n / 2,
+  have t0 : n % 2 + 2 * n' = n := int.mod_add_div n 2,
+  rw h at t0,
+  let q := n' / 2,
+  let r := n' % 2,
+  have t0' : r + 2 * q = n' := int.mod_add_div n' 2,
+  rw ← t0' at t0,
+  have t1 : 0 ≤ r := int.mod_nonneg n' (calc (2 : ℤ) ≠ 0 : by norm_num),
+  have t2 : r < 2 := int.mod_lt_of_pos n' (calc 0 < (2 : ℤ) : by norm_num),
+  by_cases r = 0, {
+    calc n^2 % 8 = (8 * (2*q^2+q) + 1) % 8 : by { congr, rw [← t0, h], ring, }
+    ... = 1 : by { rw [int.add_mod, int.mul_mod_right], norm_num, },
+  },
+  by_cases r = 1, {
+    calc n^2 % 8 = (8 * (2*q^2+3*q+1) + 1) % 8 : by { congr, rw [← t0, h], ring, }
+    ... = 1 : by { rw [int.add_mod, int.mul_mod_right], norm_num, },
+  },
+  exfalso,
+  finish,
+end
+
+lemma int_sq_mod_4 (n : ℤ) : n^2 % 4 = 0 ∨ n^2 % 4 = 1 :=
+begin
+  let q := n / 2,
+  let r := n % 2,
+  have t0 : r + 2 * q = n := int.mod_add_div n 2,
+  have t1 : 0 ≤ r := int.mod_nonneg n (calc (2 : ℤ) ≠ 0 : by norm_num),
+  have t2 : r < 2 := int.mod_lt_of_pos n (calc 0 < (2 : ℤ) : by norm_num),
+  by_cases r = 0, {
+    left,
+    calc n^2 % 4 = (4 * q^2) % 4 : by { congr, rw [← t0, h], ring, }
+    ... = 0 : by { rw int.mul_mod_right, },
+  },
+  by_cases r = 1, {
+    right,
+    calc n^2 % 4 = (4*(q^2+q)+1) % 4 : by { congr, rw [← t0, h], ring, }
+    ... = 1 : by { rw [int.add_mod, int.mul_mod_right], norm_num, },
+  },
+  exfalso,
+  finish,
+end

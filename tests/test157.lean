@@ -268,7 +268,7 @@ begin
   have h_infinite_descent : ∀ N : ℕ, ¬ (∃ (x y z : ℤ) (m : ℚ), 0 < x ∧ 0 < y ∧ 0 < z ∧ 0 < m
   ∧ x.gcd y = 1 ∧ x ^ 2 + y ^ 2 = z ^ 2 ∧ (x : ℚ) * y / 2 = n * m ^ 2 ∧ z ≤ N) := by {
     intro N,
-    induction N, {
+    induction N with N hind, {
       rintros ⟨ x, y, z, m, hxpos, hypos, hzpos, hmpos, h1, h2, h3, h4 ⟩,
       norm_cast at h4,
       linarith only [hzpos, h4],
@@ -308,12 +308,12 @@ begin
         rw hn at h3' ⊢,
         norm_cast at h3' ⊢,
         rw one_mul at h3',
-        rcases int_pow_coprime hpos3 haminusb h1234cop h3' with ⟨ a3, b3, ha3p, hb3p, hab3cop, ha3, hb3 ⟩,
-        rcases int_pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, b2, ha2p, hb2p, hab2cop, ha2, hb2 ⟩,
-        rcases int_pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
-        use [a1, b1, b2, b3, ha1],
-        split, { ring, exact hb1, },
-        use [hb2, hb3],
+        rcases int_pow_coprime hpos3 haminusb h1234cop h3' with ⟨ a3, v, ha3p, hvp, hab3cop, ha3, hv ⟩,
+        rcases int_pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, u, ha2p, hup, hab2cop, ha2, hu ⟩,
+        rcases int_pow_coprime ha hb h12cop ha2 with ⟨ r, s, hrp, hsp, hab1cop, hr, hs ⟩,
+        use [r, s, u, v, hr],
+        split, { ring, exact hs, },
+        use [hu, hv],
       },
       have hnp : nat.prime n := by {
         cases hn with hn hn,
@@ -321,25 +321,56 @@ begin
         exact hn.1,
       },
       rcases int_pow_coprime_prime hpos3 haminusb h1234cop hnp h3' with
-      ⟨ a3, b3, ha3p, hb3p, hab3cop, ⟨ ha3, hb3 ⟩ | ⟨ ha3, hb3 ⟩ ⟩, {
+      ⟨ a3, v, ha3p, hvp, hab3cop, ⟨ ha3, hv ⟩ | ⟨ ha3, hv ⟩ ⟩, {
         rcases int_pow_coprime_prime hpos2 haplusb h123cop hnp ha3 with
-        ⟨ a2, b2, ha2p, hb2p, hab2cop, ⟨ ha2, hb2 ⟩ | ⟨ ha2, hb2 ⟩ ⟩, {
+        ⟨ a2, u, ha2p, hup, hab2cop, ⟨ ha2, hu ⟩ | ⟨ ha2, hu ⟩ ⟩, {
           rcases int_pow_coprime_prime ha hb h12cop hnp ha2 with
-          ⟨ a1, b1, ha1p, hb1p, hab1cop, ⟨ ha1, hb1 ⟩ | ⟨ ha1, hb1 ⟩ ⟩, {
+          ⟨ r, s, hrp, hsp, hab1cop, ⟨ hr, hs ⟩ | ⟨ hr, hs ⟩ ⟩, {
             exfalso,
             sorry,
           }, {
-            use [a1, b1, b2, b3, ha1, hb1, hb2, hb3],
+            use [r, s, u, v, hr, hs, hu, hv],
           },
         }, {
           exfalso,
-          rcases int_pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
-          sorry,
+          rcases int_pow_coprime ha hb h12cop ha2 with ⟨ r, s, hrp, hsp, hab1cop, hr, hs ⟩,
+          have k1 : (a+b)%4=1 := by {
+            rcases hparity with ⟨ ha, hb ⟩ | ⟨ ha, hb ⟩, {
+              rw hr at ha,
+              replace ha := int_even_sq_mod_4 r ((int_even_iff_sq_even r).2 ha),
+              rw ← hr at ha,
+              rw hs at hb,
+              replace hb := int_odd_sq_mod_4 s ((int_odd_iff_sq_odd s).2 hb),
+              rw ← hs at hb,
+              rw [int.add_mod, ha, hb], norm_num,
+            }, {
+              rw hr at ha,
+              replace ha := int_odd_sq_mod_4 r ((int_odd_iff_sq_odd r).2 ha),
+              rw ← hr at ha,
+              rw hs at hb,
+              replace hb := int_even_sq_mod_4 s ((int_even_iff_sq_even s).2 hb),
+              rw ← hs at hb,
+              rw [int.add_mod, ha, hb], norm_num,
+            },
+          },
+          rw [hu, int.mul_mod] at k1,
+          cases int_sq_mod_4 u with k2 k2, {
+            rw k2 at k1, norm_num at k1, exact k1,
+          },
+          cases hn with hn hn, {
+            rw [k2, hn] at k1, norm_num at k1,
+          },
+          replace hn : (n : ℤ) % 4 = 3 := by {
+            norm_cast,
+            rw [← nat.mod_mod_of_dvd n (calc 4 ∣ 8 : by norm_num), hn.2],
+            norm_num,
+          },
+          rw [k2, hn] at k1, norm_num at k1,
         },
       }, {
         exfalso,
-        rcases int_pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, b2, ha2p, hb2p, hab2cop, ha2, hb2 ⟩,
-        rcases int_pow_coprime ha hb h12cop ha2 with ⟨ a1, b1, ha1p, hb1p, hab1cop, ha1, hb1 ⟩,
+        rcases int_pow_coprime hpos2 haplusb h123cop ha3 with ⟨ a2, u, ha2p, hup, hab2cop, ha2, hu ⟩,
+        rcases int_pow_coprime ha hb h12cop ha2 with ⟨ r, s, hrp, hsp, hab1cop, hr, hs ⟩,
         sorry,
       },
     },
