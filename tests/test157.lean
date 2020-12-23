@@ -289,7 +289,7 @@ begin
     rw hm at hmpos h3 h3',
     norm_cast at hmpos h3',
     clear hm m',
-    have key : ∃ r s u v : ℤ, a=r^2 ∧ b=n*s^2 ∧ a+b=u^2 ∧ a-b=v^2 := by {
+    have key : ∃ r s u v : ℤ, a=r^2 ∧ b=n*s^2 ∧ a+b=u^2 ∧ a-b=v^2 ∧ r%2=1 ∧ s%2=0 := by {
       have h13cop : a.gcd (a+b) = 1 := by { rw gcd_add a b 1 at h12cop, rw ← h12cop, rw add_comm, ring, },
       have h14cop : a.gcd (a-b) = 1 := by { rw [gcd_neg a b, gcd_add a (-b) 1] at h12cop, rw ← h12cop, rw add_comm, ring, },
       have h23cop : b.gcd (a+b) = 1 := by { rw [int.gcd_comm, gcd_add b a 1] at h12cop, rw ← h12cop, ring, },
@@ -314,6 +314,25 @@ begin
         use [r, s, u, v, hr],
         split, { ring, exact hs, },
         use [hu, hv],
+        rcases hparity with ⟨ hpa, hpb ⟩ | ⟨ hpa, hpb ⟩, {
+          exfalso,
+          rw hr at hpa,
+          replace hpa := int_even_sq_mod_4 r ((int_even_iff_sq_even r).2 hpa),
+          rw ← hr at hpa,
+          rw hs at hpb,
+          replace hpb := int_odd_sq_mod_4 s ((int_odd_iff_sq_odd s).2 hpb),
+          rw ← hs at hpb,
+          apply_fun (λ x : ℤ, x % 4) at hv,
+          rw [int.sub_mod, hpa, hpb] at hv,
+          cases int_sq_mod_4 v with h h,
+          { rw h at hv, norm_num at hv, },
+          { rw h at hv, norm_num at hv, },
+        }, {
+          rw hr at hpa,
+          use (int_odd_iff_sq_odd r).2 hpa,
+          rw hs at hpb,
+          use (int_even_iff_sq_even s).2 hpb,
+        },
       },
       have hnp : nat.prime n := by {
         cases hn with hn hn,
@@ -330,27 +349,71 @@ begin
             sorry,
           }, {
             use [r, s, u, v, hr, hs, hu, hv],
+            rcases hparity with ⟨ hpa, hpb ⟩ | ⟨ hpa, hpb ⟩, {
+              exfalso,
+              rw hs at hpb,
+              cases hn with hn hn,
+              { rw [hn, int.mul_mod] at hpb, simp at hpb, exact hpb, },
+              rw hr at hpa,
+              replace hpa := int_even_sq_mod_4 r ((int_even_iff_sq_even r).2 hpa),
+              rw ← hr at hpa,
+              rw [← int.not_even_iff, int.even_mul, not_or_distrib] at hpb,
+              replace hpb := int_odd_sq_mod_4 s ((int_odd_iff_sq_odd s).2 (int.not_even_iff.1 hpb.2)),
+              replace hn : (n : ℤ) % 4 = 3 := by {
+                norm_cast,
+                rw [← nat.mod_mod_of_dvd n (calc 4 ∣ 8 : by norm_num), hn.2],
+                norm_num,
+              },
+              apply_fun (λ x : ℤ, x % 4) at hu,
+              rw [int.add_mod, hpa, hs, int.mul_mod, hpb, hn] at hu,
+              cases int_sq_mod_4 u with h h,
+              { rw h at hu, norm_num at hu, },
+              { rw h at hu, norm_num at hu, },
+            }, {
+              rw hr at hpa,
+              replace hpa := (int_odd_iff_sq_odd r).2 hpa,
+              use hpa,
+              cases hn with hn hn, {
+                by_contradiction,
+                rw int.mod_two_ne_zero at h,
+                apply_fun (λ x : ℤ, x % 4) at hu,
+                rw [int.add_mod, hr, hs, int.mul_mod, int_odd_sq_mod_4 r hpa, int_odd_sq_mod_4 s h, hn] at hu,
+                cases int_sq_mod_4 u with h h,
+                { rw h at hu, norm_num at hu, },
+                { rw h at hu, norm_num at hu, },
+              },
+              rw [← int.even_iff, hs, int.even_mul] at hpb,
+              replace hn : ¬ even (n : ℤ) := by {
+                rw int.not_even_iff,
+                norm_cast,
+                rw [← nat.mod_mod_of_dvd n (calc 2 ∣ 8 : by norm_num), hn.2],
+                norm_num,
+              },
+              cases hpb with hpb hpb, { exfalso, exact hn hpb, },
+              rw [int.even_iff, ← int_even_iff_sq_even s] at hpb,
+              exact hpb,
+            },
           },
         }, {
           exfalso,
           rcases int_pow_coprime ha hb h12cop ha2 with ⟨ r, s, hrp, hsp, hab1cop, hr, hs ⟩,
           have k1 : (a+b)%4=1 := by {
-            rcases hparity with ⟨ ha, hb ⟩ | ⟨ ha, hb ⟩, {
-              rw hr at ha,
-              replace ha := int_even_sq_mod_4 r ((int_even_iff_sq_even r).2 ha),
-              rw ← hr at ha,
-              rw hs at hb,
-              replace hb := int_odd_sq_mod_4 s ((int_odd_iff_sq_odd s).2 hb),
-              rw ← hs at hb,
-              rw [int.add_mod, ha, hb], norm_num,
+            rcases hparity with ⟨ hpa, hpb ⟩ | ⟨ hpa, hpb ⟩, {
+              rw hr at hpa,
+              replace hpa := int_even_sq_mod_4 r ((int_even_iff_sq_even r).2 hpa),
+              rw ← hr at hpa,
+              rw hs at hpb,
+              replace hpb := int_odd_sq_mod_4 s ((int_odd_iff_sq_odd s).2 hpb),
+              rw ← hs at hpb,
+              rw [int.add_mod, hpa, hpb], norm_num,
             }, {
-              rw hr at ha,
-              replace ha := int_odd_sq_mod_4 r ((int_odd_iff_sq_odd r).2 ha),
-              rw ← hr at ha,
-              rw hs at hb,
-              replace hb := int_even_sq_mod_4 s ((int_even_iff_sq_even s).2 hb),
-              rw ← hs at hb,
-              rw [int.add_mod, ha, hb], norm_num,
+              rw hr at hpa,
+              replace hpa := int_odd_sq_mod_4 r ((int_odd_iff_sq_odd r).2 hpa),
+              rw ← hr at hpa,
+              rw hs at hpb,
+              replace hpb := int_even_sq_mod_4 s ((int_even_iff_sq_even s).2 hpb),
+              rw ← hs at hpb,
+              rw [int.add_mod, hpa, hpb], norm_num,
             },
           },
           rw [hu, int.mul_mod] at k1,
@@ -374,13 +437,14 @@ begin
         sorry,
       },
     },
-    /-rcases key with ⟨ r, s, u, v, k1, k2, k3, k4 ⟩,
+    rcases key with ⟨ r, s, u, v, hr, hs, hu, hv, hpa, hpb ⟩,
+    clear hparity,
     set! x' := (u-v)/2 with hx', clear_value x',
     replace hx' : x'*2=u-v := by {
       rw hx',
       have : (u-v)%2=0 := by {
         have t1 := calc 2*(a-u*v) = (a+b)+(a-b)-2*u*v : by ring
-        ... = u^2+v^2-2*u*v : by rw [k3, k4]
+        ... = u^2+v^2-2*u*v : by rw [hu, hv]
         ... = (u-v)^2 : by ring,
         have t2 : (2*(a-u*v))%2=0 := int.mul_mod_right 2 (a-u*v),
         rw [← int.even_iff, t1, int.even_pow, int.even_iff] at t2,
@@ -394,24 +458,22 @@ begin
     ... = (u-v)+v*2 : by rw hx'
     ... = u+v : by ring,
     have hbxy := calc b*2=(a+b)-(a-b) : by ring
-    ... = (u+v)*(u-v) : by { rw [k3, k4], ring, }
+    ... = (u+v)*(u-v) : by { rw [hu, hv], ring, }
     ... = x'*y'*2*2 : by { rw [← hx', ← hy'], ring, },
     rw mul_left_inj' (calc (2:ℤ) ≠ 0 : by norm_num) at hbxy,
     set! s' := s/2 with hs', clear_value s',
-    replace hs' : s'*2=s := by {
-      sorry,
-    },
-    have hpy := calc 4*(x'*x'+y'*y') = (x'*2)^2+(y'*2)^2 : by ring
+    replace hs' : s'*2=s := by { rw hs', exact int.div_mul_cancel_of_mod_eq_zero hpb, },
+    have hpy := calc 4*(x'^2+y'^2) = (x'*2)^2+(y'*2)^2 : by ring
     ... = 2*u^2 + 2*v^2 : by { rw [hx', hy'], ring, }
-    ... = 4*(r*r) : by { rw [← k3, ← k4, k1], ring, },
+    ... = 4*(r^2) : by { rw [← hu, ← hv, hr], ring, },
     rw mul_right_inj' (calc (4 : ℤ) ≠ 0 : by norm_num) at hpy,
     have hcoprime : x'.gcd y' = 1 := by {
       sorry,
     },
-    apply N_ih,
+    apply hind,
     use [x', y', r, s'],
     split, { exact hpy, },
-    split, { exact hcoprime, },-/
+    split, { exact hcoprime, },
     sorry,
   },
   rw is_congr_num_iff_xyzZpos_coprime n at h0,
