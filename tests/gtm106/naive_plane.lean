@@ -6,6 +6,7 @@ import tactic
 
 noncomputable theory
 
+@[ext]
 structure affine_plane_point (K : Type*) [field K] :=
 mk :: (x y : K)
 
@@ -51,7 +52,7 @@ begin
   projective_plane_point.Y
   projective_plane_point.Z,
   ring,
-  sorry,
+  ext; refl,
 end
 
 lemma projective_plane_point.embed_invertible {K : Type*} [field K]
