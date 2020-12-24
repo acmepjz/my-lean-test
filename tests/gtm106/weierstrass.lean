@@ -1,8 +1,7 @@
 import algebra.field
--- import algebra.algebra.basic
 import data.int.basic
 import data.rat.basic
--- import tests.gtm106.naive_algebraic_geometry
+import tests.gtm106.naive_plane
 import tactic
 
 noncomputable theory
@@ -10,139 +9,95 @@ noncomputable theory
 structure weierstrass_equation (K : Type*) [field K] :=
 mk :: (a1 a2 a3 a4 a6 : K)
 
-/-
-def weierstrass_equation.affine_curve {K : Type*} [field K] (E : weierstrass_equation K)
-: naive_affine_hypersurface (naive_affine_space.mk1 K 2)
-:= naive_affine_hypersurface.mk (by {
-  let A := naive_affine_space.mk1 K 2,
-  let x := A.x_i 0 (by norm_num),
-  let y := A.x_i 1 (by norm_num),
-  use x, -- y^2 + E.a1*x*y + E.a3*y - x^3 - E.a2*x^2 - E.a4*x - E.a6,
-})
--/
-
 def weierstrass_equation.eval_at_affine_point
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) : K :=
-y^2 + E.a1*x*y + E.a3*y - x^3 - E.a2*x^2 - E.a4*x - E.a6
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+P.y^2 + E.a1*P.x*P.y + E.a3*P.y - P.x^3 - E.a2*P.x^2 - E.a4*P.x - E.a6
 
 def weierstrass_equation.eval_dx_at_affine_point
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) : K :=
-E.a1*y - 3*x^2 - 2*E.a2*x - E.a4
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+E.a1*P.y - 3*P.x^2 - 2*E.a2*P.x - E.a4
 
 def weierstrass_equation.eval_dy_at_affine_point
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) : K :=
-2*y + E.a1*x + E.a3
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+2*P.y + E.a1*P.x + E.a3
 
 def weierstrass_equation.affine_point_on_curve
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) :=
-E.eval_at_affine_point x y = 0
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
+E.eval_at_affine_point P = 0
 
 def weierstrass_equation.affine_point_smooth
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) :=
-E.affine_point_on_curve x y ∧ ¬ (E.eval_dx_at_affine_point x y = 0 ∧ E.eval_dy_at_affine_point x y = 0)
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
+E.affine_point_on_curve P ∧ ¬ (E.eval_dx_at_affine_point P = 0 ∧ E.eval_dy_at_affine_point P = 0)
 
 def weierstrass_equation.affine_smooth
 {K : Type*} [field K] (E : weierstrass_equation K) :=
-∀ x y : K, E.affine_point_on_curve x y → E.affine_point_smooth x y
-
-def is_projective_point {K : Type*} [field K] (X Y Z : K) :=
-¬ (X = 0 ∧ Y = 0 ∧ Z = 0)
-
-def is_projective_point_equal {K : Type*} [field K] (X Y Z X' Y' Z' : K) :=
-∃ a : K, a ≠ 0 ∧ X' = a * X ∧ Y' = a * Y ∧ Z' = a * Z
-
-lemma is_projective_point.equal {K : Type*} [field K] {X Y Z X' Y' Z' : K}
-(h : is_projective_point_equal X Y Z X' Y' Z') :
-is_projective_point X Y Z ↔ is_projective_point X' Y' Z' :=
-begin
-  rcases h with ⟨ a, ha, hX, hY, hZ ⟩,
-  split, {
-    intros h h',
-    rw [hX, hY, hZ] at h',
-    field_simp [ha] at h',
-    exact h h',
-  }, {
-    intros h h',
-    have : X' = 0 ∧ Y' = 0 ∧ Z' = 0 := by {
-      rw [hX, hY, hZ, h'.1, h'.2.1, h'.2.2],
-      simp,
-    },
-    exact h this,
-  },
-end
-
-def is_finite_projective_point {K : Type*} [field K] (X Y Z : K) :=
-is_projective_point X Y Z ∧ Z ≠ 0
-
-def is_infinite_projective_point {K : Type*} [field K] (X Y Z : K) :=
-is_projective_point X Y Z ∧ Z = 0
+∀ P : affine_plane_point K, E.affine_point_on_curve P → E.affine_point_smooth P
 
 def weierstrass_equation.eval_at_projective_point
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) : K :=
-Y^2*Z + E.a1*X*Y*Z + E.a3*Y*Z^2 - X^3 - E.a2*X^2*Z - E.a4*X*Z^2 - E.a6*Z^3
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) : K :=
+P.Y^2*P.Z + E.a1*P.X*P.Y*P.Z + E.a3*P.Y*P.Z^2 - P.X^3 - E.a2*P.X^2*P.Z - E.a4*P.X*P.Z^2 - E.a6*P.Z^3
 
 def weierstrass_equation.eval_dX_at_projective_point
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) : K :=
-E.a1*Y*Z - 3*X^2 - 2*E.a2*X*Z - E.a4*Z^2
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) : K :=
+E.a1*P.Y*P.Z - 3*P.X^2 - 2*E.a2*P.X*P.Z - E.a4*P.Z^2
 
 def weierstrass_equation.eval_dY_at_projective_point
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) : K :=
-2*Y*Z + E.a1*X*Z + E.a3*Z^2
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) : K :=
+2*P.Y*P.Z + E.a1*P.X*P.Z + E.a3*P.Z^2
 
 def weierstrass_equation.eval_dZ_at_projective_point
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) : K :=
-Y^2 + E.a1*X*Y + 2*E.a3*Y*Z - E.a2*X^2 - 2*E.a4*X*Z - 3*E.a6*Z^2
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) : K :=
+P.Y^2 + E.a1*P.X*P.Y + 2*E.a3*P.Y*P.Z - E.a2*P.X^2 - 2*E.a4*P.X*P.Z - 3*E.a6*P.Z^2
 
 def weierstrass_equation.projective_point_on_curve
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) :=
-is_projective_point X Y Z ∧ E.eval_at_projective_point X Y Z = 0
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
+E.eval_at_projective_point P = 0
 
 def weierstrass_equation.projective_point_on_curve.equal
-{K : Type*} [field K] (E : weierstrass_equation K) {X Y Z X' Y' Z' : K}
-(h : is_projective_point_equal X Y Z X' Y' Z') :
-E.projective_point_on_curve X Y Z ↔ E.projective_point_on_curve X' Y' Z' :=
+{K : Type*} [field K] (E : weierstrass_equation K) {P P' : projective_plane_point K}
+(h : P.is_equal P') :
+E.projective_point_on_curve P ↔ E.projective_point_on_curve P' :=
 begin
-  have hh := h,
-  rcases hh with ⟨ a, ha, hX, hY, hZ ⟩,
-  have key := calc E.eval_at_projective_point X' Y' Z'
-  = (E.eval_at_projective_point X Y Z)*a^3 : by {
-    rw [hX, hY, hZ],
+  rcases h with ⟨ a, ha, hX, hY, hZ ⟩,
+  have key := calc E.eval_at_projective_point P'
+  = (E.eval_at_projective_point P)*a^3 : by {
     unfold weierstrass_equation.eval_at_projective_point,
+    rw [hX, hY, hZ],
     ring,
   },
   unfold weierstrass_equation.projective_point_on_curve,
-  rw [is_projective_point.equal h, key],
+  rw key,
   field_simp [ha],
 end
 
 def weierstrass_equation.projective_point_smooth
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) :=
-E.projective_point_on_curve X Y Z ∧ ¬ (E.eval_dX_at_projective_point X Y Z = 0
-∧ E.eval_dY_at_projective_point X Y Z = 0 ∧ E.eval_dZ_at_projective_point X Y Z = 0)
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
+E.projective_point_on_curve P ∧ ¬ (E.eval_dX_at_projective_point P = 0
+∧ E.eval_dY_at_projective_point P = 0 ∧ E.eval_dZ_at_projective_point P = 0)
 
 lemma weierstrass_equation.projective_point_smooth.equal
-{K : Type*} [field K] (E : weierstrass_equation K) {X Y Z X' Y' Z' : K}
-(h : is_projective_point_equal X Y Z X' Y' Z') :
-E.projective_point_smooth X Y Z ↔ E.projective_point_smooth X' Y' Z' :=
+{K : Type*} [field K] (E : weierstrass_equation K) {P P' : projective_plane_point K}
+(h : P.is_equal P') :
+E.projective_point_smooth P ↔ E.projective_point_smooth P' :=
 begin
   have hh := h,
   rcases hh with ⟨ a, ha, hX, hY, hZ ⟩,
-  have keyX := calc E.eval_dX_at_projective_point X' Y' Z'
-  = (E.eval_dX_at_projective_point X Y Z)*a^2 : by {
-    rw [hX, hY, hZ],
+  have keyX := calc E.eval_dX_at_projective_point P'
+  = (E.eval_dX_at_projective_point P)*a^2 : by {
     unfold weierstrass_equation.eval_dX_at_projective_point,
+    rw [hX, hY, hZ],
     ring,
   },
-  have keyY := calc E.eval_dY_at_projective_point X' Y' Z'
-  = (E.eval_dY_at_projective_point X Y Z)*a^2 : by {
-    rw [hX, hY, hZ],
+  have keyY := calc E.eval_dY_at_projective_point P'
+  = (E.eval_dY_at_projective_point P)*a^2 : by {
     unfold weierstrass_equation.eval_dY_at_projective_point,
+    rw [hX, hY, hZ],
     ring,
   },
-  have keyZ := calc E.eval_dZ_at_projective_point X' Y' Z'
-  = (E.eval_dZ_at_projective_point X Y Z)*a^2 : by {
-    rw [hX, hY, hZ],
+  have keyZ := calc E.eval_dZ_at_projective_point P'
+  = (E.eval_dZ_at_projective_point P)*a^2 : by {
     unfold weierstrass_equation.eval_dZ_at_projective_point,
+    rw [hX, hY, hZ],
     ring,
   },
   split, {
@@ -166,43 +121,55 @@ end
 
 def weierstrass_equation.smooth
 {K : Type*} [field K] (E : weierstrass_equation K) :=
-∀ X Y Z : K, E.projective_point_on_curve X Y Z → E.projective_point_smooth X Y Z
+∀ P : projective_plane_point K, E.projective_point_on_curve P → E.projective_point_smooth P
 
 lemma weierstrass_equation.affine_point_is_projective_point
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) :
-E.affine_point_on_curve x y ↔ E.projective_point_on_curve x y 1 :=
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :
+E.affine_point_on_curve P ↔ E.projective_point_on_curve P.to_projective_plane :=
 begin
-  have key := calc E.eval_at_projective_point x y 1 = E.eval_at_affine_point x y : by {
-    unfold weierstrass_equation.eval_at_projective_point
+  have key := calc E.eval_at_projective_point P.to_projective_plane = E.eval_at_affine_point P : by {
+    unfold affine_plane_point.to_projective_plane
+    projective_plane_point.X
+    projective_plane_point.Y
+    projective_plane_point.Z
+    weierstrass_equation.eval_at_projective_point
     weierstrass_equation.eval_at_affine_point,
     ring,
   },
   unfold weierstrass_equation.affine_point_on_curve
   weierstrass_equation.projective_point_on_curve,
   rw key,
-  have h : is_projective_point x y 1 := by {
-    intro h, simp at h, exact h,
-  },
-  simp [h],
 end
 
 lemma weierstrass_equation.affine_point_smooth_iff_projective_point_smooth
-{K : Type*} [field K] (E : weierstrass_equation K) (x y : K) :
-E.affine_point_smooth x y ↔ E.projective_point_smooth x y 1 :=
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :
+E.affine_point_smooth P ↔ E.projective_point_smooth P.to_projective_plane :=
 begin
-  have keyX := calc E.eval_dX_at_projective_point x y 1 = E.eval_dx_at_affine_point x y : by {
-    unfold weierstrass_equation.eval_dX_at_projective_point
+  have keyX := calc E.eval_dX_at_projective_point P.to_projective_plane = E.eval_dx_at_affine_point P : by {
+    unfold affine_plane_point.to_projective_plane
+    projective_plane_point.X
+    projective_plane_point.Y
+    projective_plane_point.Z
+    weierstrass_equation.eval_dX_at_projective_point
     weierstrass_equation.eval_dx_at_affine_point,
     ring,
   },
-  have keyY := calc E.eval_dY_at_projective_point x y 1 = E.eval_dy_at_affine_point x y : by {
-    unfold weierstrass_equation.eval_dY_at_projective_point
+  have keyY := calc E.eval_dY_at_projective_point P.to_projective_plane = E.eval_dy_at_affine_point P : by {
+    unfold affine_plane_point.to_projective_plane
+    projective_plane_point.X
+    projective_plane_point.Y
+    projective_plane_point.Z
+    weierstrass_equation.eval_dY_at_projective_point
     weierstrass_equation.eval_dy_at_affine_point,
     ring,
   },
-  have keyZ := calc E.eval_dZ_at_projective_point x y 1 =
-  3 * E.eval_at_affine_point x y - x * E.eval_dx_at_affine_point x y - y * E.eval_dy_at_affine_point x y : by {
-    unfold weierstrass_equation.eval_dZ_at_projective_point
+  have keyZ := calc E.eval_dZ_at_projective_point P.to_projective_plane =
+  3 * E.eval_at_affine_point P - P.x * E.eval_dx_at_affine_point P - P.y * E.eval_dy_at_affine_point P : by {
+    unfold affine_plane_point.to_projective_plane
+    projective_plane_point.X
+    projective_plane_point.Y
+    projective_plane_point.Z
+    weierstrass_equation.eval_dZ_at_projective_point
     weierstrass_equation.eval_at_affine_point
     weierstrass_equation.eval_dx_at_affine_point
     weierstrass_equation.eval_dy_at_affine_point,
@@ -210,7 +177,7 @@ begin
   },
   unfold weierstrass_equation.affine_point_smooth
   weierstrass_equation.projective_point_smooth,
-  rw [← E.affine_point_is_projective_point x y, keyX, keyY],
+  rw [← E.affine_point_is_projective_point P, keyX, keyY],
   unfold weierstrass_equation.affine_point_on_curve,
   split, {
     intro h,
@@ -230,29 +197,38 @@ begin
 end
 
 lemma weierstrass_equation.projective_point_is_affine_point
-{K : Type*} [field K] (E : weierstrass_equation K) (X Y Z : K) :
-E.projective_point_on_curve X Y Z ↔ is_projective_point_equal X Y Z 0 1 0
-∨ (is_finite_projective_point X Y Z ∧ E.affine_point_on_curve (X/Z) (Y/Z)) :=
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :
+E.projective_point_on_curve P ↔ P.is_equal (projective_plane_point.infinite_point_Y K)
+∨ (P.is_finite ∧ E.affine_point_on_curve P.to_affine_plane) :=
 begin
   split, {
-    rintros ⟨ h1, h2 ⟩,
-    by_cases hZ : Z = 0, {
+    have h1 := P.h,
+    intro h2,
+    unfold weierstrass_equation.projective_point_on_curve at h2,
+    by_cases hZ : P.Z = 0, {
       left,
       unfold weierstrass_equation.eval_at_projective_point at h2,
       rw hZ at h2,
       ring at h2,
       field_simp at h2,
-      replace h1 : Y ≠ 0 := by { intro h, exact h1 ⟨ h2, h, hZ ⟩, },
-      use 1/Y,
+      replace h1 : P.Y ≠ 0 := by { intro h, exact h1 ⟨ h2, h, hZ ⟩, },
+      use 1/P.Y,
+      unfold projective_plane_point.infinite_point_Y
+      projective_plane_point.X
+      projective_plane_point.Y
+      projective_plane_point.Z,
       rw [hZ, h2],
       field_simp [h1],
     },
     right,
-    use ⟨ h1, hZ ⟩,
-    calc E.eval_at_affine_point (X/Z) (Y/Z)
-    = (E.eval_at_projective_point X Y Z)/Z^3 : by {
+    use hZ,
+    calc E.eval_at_affine_point P.to_affine_plane
+    = (E.eval_at_projective_point P)/P.Z^3 : by {
       unfold weierstrass_equation.eval_at_projective_point
-      weierstrass_equation.eval_at_affine_point,
+      weierstrass_equation.eval_at_affine_point
+      projective_plane_point.to_affine_plane
+      affine_plane_point.x
+      affine_plane_point.y,
       field_simp [pow_succ, hZ],
       ring,
     }
@@ -265,24 +241,26 @@ begin
     rw weierstrass_equation.projective_point_on_curve.equal E h,
     unfold weierstrass_equation.projective_point_on_curve
     weierstrass_equation.eval_at_projective_point
-    is_projective_point,
+    projective_plane_point.infinite_point_Y
+    projective_plane_point.X
+    projective_plane_point.Y
+    projective_plane_point.Z,
     simp, ring,
   },
   rw E.affine_point_is_projective_point at h2,
-  have : is_projective_point_equal (X / Z) (Y / Z) 1 X Y Z := by {
-    use Z,
-    field_simp [h1.2, mul_comm],
-  },
-  rw weierstrass_equation.projective_point_on_curve.equal E this at h2,
+  rw ← weierstrass_equation.projective_point_on_curve.equal E (P.embed_invertible h1) at h2,
   exact h2,
 end
 
 lemma weierstrass_equation.infinite_point_is_smooth
-{K : Type*} [field K] (E : weierstrass_equation K) : E.projective_point_smooth 0 1 0 :=
+{K : Type*} [field K] (E : weierstrass_equation K) : E.projective_point_smooth (projective_plane_point.infinite_point_Y K) :=
 begin
   unfold weierstrass_equation.projective_point_smooth
   weierstrass_equation.projective_point_on_curve
-  is_projective_point
+  projective_plane_point.infinite_point_Y
+  projective_plane_point.X
+  projective_plane_point.Y
+  projective_plane_point.Z
   weierstrass_equation.eval_at_projective_point
   weierstrass_equation.eval_dX_at_projective_point
   weierstrass_equation.eval_dY_at_projective_point
