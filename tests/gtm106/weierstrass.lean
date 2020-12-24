@@ -1,7 +1,8 @@
 import algebra.field
+import algebra.algebra.basic
 import data.int.basic
 import data.rat.basic
-import tests.gtm106.naive_algebraic_geometry
+-- import tests.gtm106.naive_algebraic_geometry
 import tactic
 
 noncomputable theory
@@ -9,6 +10,7 @@ noncomputable theory
 structure weierstrass_equation (K : Type*) [field K] :=
 mk :: (a1 a2 a3 a4 a6 : K)
 
+/-
 def weierstrass_equation.affine_curve {K : Type*} [field K] (E : weierstrass_equation K)
 : naive_affine_hypersurface (naive_affine_space.mk1 K 2)
 := naive_affine_hypersurface.mk (by {
@@ -17,6 +19,48 @@ def weierstrass_equation.affine_curve {K : Type*} [field K] (E : weierstrass_equ
   let y := A.x_i 1 (by norm_num),
   use x, -- y^2 + E.a1*x*y + E.a3*y - x^3 - E.a2*x^2 - E.a4*x - E.a6,
 })
+-/
+
+def weierstrass_equation.eval_at_affine_point
+{K : Type*} [field K] (E : weierstrass_equation K)
+{R : Type*} [comm_ring R] [algebra K R] (x y : R) : R :=
+let ι := algebra_map K R in
+y^2 + ι(E.a1)*x*y + ι(E.a3)*y - x^3 - ι(E.a2)*x^2 - ι(E.a4)*x - ι(E.a6)
+
+def weierstrass_equation.affine_point_on_curve
+{K : Type*} [field K] (E : weierstrass_equation K)
+{R : Type*} [comm_ring R] [algebra K R] (x y : R) :=
+E.eval_at_affine_point x y = 0
+
+def is_projective_point {R : Type*} [comm_ring R] (X Y Z : R) :=
+¬ (X = 0 ∧ Y = 0 ∧ Z = 0)
+
+def is_projective_point_finite {R : Type*} [comm_ring R] (X Y Z : R) :=
+¬ (X = 0 ∧ Y = 0 ∧ Z = 0) ∧ Z ≠ 0
+
+def is_projective_point_infinite {R : Type*} [comm_ring R] (X Y Z : R) :=
+¬ (X = 0 ∧ Y = 0 ∧ Z = 0) ∧ Z = 0
+
+def weierstrass_equation.eval_at_projective_point
+{K : Type*} [field K] (E : weierstrass_equation K)
+{R : Type*} [comm_ring R] [algebra K R] (X Y Z : R) : R :=
+let ι := algebra_map K R in
+Y^2*Z + ι(E.a1)*X*Y*Z + ι(E.a3)*Y*Z^2 - X^3 - ι(E.a2)*X^2*Y - ι(E.a4)*X*Y^2 - ι(E.a6)*Z^3
+
+def weierstrass_equation.projective_point_on_curve
+{K : Type*} [field K] (E : weierstrass_equation K)
+{R : Type*} [comm_ring R] [algebra K R] (X Y Z : R) :=
+¬ (X = 0 ∧ Y = 0 ∧ Z = 0) ∧ E.eval_at_projective_point X Y Z = 0
+
+lemma weierstrass_equation.affine_point_is_projective_point
+{K : Type*} [field K] (E : weierstrass_equation K)
+{R : Type*} [comm_ring R] [algebra K R] (x y : R)
+(h : E.affine_point_on_curve x y) : E.projective_point_on_curve x y 1 :=
+begin
+  split,
+  sorry,
+  sorry,
+end
 
 def weierstrass_equation.b2 {K : Type*} [field K] (E : weierstrass_equation K) : K :=
 E.a1^2 + 4*E.a2
