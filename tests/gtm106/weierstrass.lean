@@ -329,6 +329,140 @@ weierstrass_equation.mk
 ((E.a4 - C.s*E.a3 + 2*C.r*E.a2 - (C.t+C.r*C.s)*E.a1 + 3*C.r^2 - 2*C.s*C.t)/C.u^4)
 ((E.a6 + C.r*E.a4 + C.r^2*E.a2 + C.r^3 - C.t*E.a3 - C.t^2 - C.r*C.t*E.a1)/C.u^6)
 
+lemma linear_change_of_variable.a1 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).a1 = (E.a1 + 2*C.s)/C.u :=
+begin
+  unfold linear_change_of_variable.change_curve
+  weierstrass_equation.a1,
+end
+
+lemma linear_change_of_variable.a2 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).a2 = (E.a2 - C.s*E.a1 + 3*C.r - C.s^2)/C.u^2 :=
+begin
+  unfold linear_change_of_variable.change_curve
+  weierstrass_equation.a2,
+end
+
+lemma linear_change_of_variable.a3 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).a3 = (E.a3 + C.r*E.a1 + 2*C.t)/C.u^3 :=
+begin
+  unfold linear_change_of_variable.change_curve
+  weierstrass_equation.a3,
+end
+
+lemma linear_change_of_variable.a4 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).a4 = (E.a4 - C.s*E.a3 + 2*C.r*E.a2 - (C.t+C.r*C.s)*E.a1 + 3*C.r^2 - 2*C.s*C.t)/C.u^4 :=
+begin
+  unfold linear_change_of_variable.change_curve
+  weierstrass_equation.a4,
+end
+
+lemma linear_change_of_variable.a6 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).a6 = (E.a6 + C.r*E.a4 + C.r^2*E.a2 + C.r^3 - C.t*E.a3 - C.t^2 - C.r*C.t*E.a1)/C.u^6 :=
+begin
+  unfold linear_change_of_variable.change_curve
+  weierstrass_equation.a6,
+end
+
+lemma linear_change_of_variable.b2 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).b2 = (E.b2 + 12*C.r)/C.u^2 :=
+begin
+  unfold weierstrass_equation.b2,
+  rw [C.a1, C.a2],
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.b4 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).b4 = (E.b4 + C.r*E.b2 + 6*C.r^2)/C.u^4 :=
+begin
+  unfold weierstrass_equation.b4
+  weierstrass_equation.b2,
+  rw [C.a1, C.a3, C.a4],
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.b6 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).b6 = (E.b6 + 2*C.r*E.b4 + C.r^2*E.b2 + 4*C.r^3)/C.u^6 :=
+begin
+  unfold weierstrass_equation.b6
+  weierstrass_equation.b4
+  weierstrass_equation.b2,
+  rw [C.a3, C.a6],
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.b8 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).b8 = (E.b8 + 3*C.r*E.b6 + 3*C.r^2*E.b4 + C.r^3*E.b2 + 3*C.r^4)/C.u^8 :=
+begin
+  unfold weierstrass_equation.b8
+  weierstrass_equation.b6
+  weierstrass_equation.b4
+  weierstrass_equation.b2,
+  rw [C.a1, C.a2, C.a3, C.a4, C.a6],
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.c4 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).c4 = E.c4/C.u^4 :=
+begin
+  unfold weierstrass_equation.c4,
+  rw [C.b2, C.b4],
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.c6 {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).c6 = E.c6/C.u^6 :=
+begin
+  unfold weierstrass_equation.c6,
+  rw [C.b2, C.b4, C.b6],
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.disc {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).disc = E.disc/C.u^12 :=
+begin
+  unfold weierstrass_equation.disc,
+  rw [C.b2, C.b4, C.b6, C.b8],
+  unfold weierstrass_equation.b8
+  weierstrass_equation.b6
+  weierstrass_equation.b4
+  weierstrass_equation.b2,
+  field_simp [pow_succ, C.hu],
+  ring,
+end
+
+lemma linear_change_of_variable.j {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: (C.change_curve E).j = E.j :=
+begin
+  unfold weierstrass_equation.j,
+  rw [C.c4, C.disc],
+  by_cases h : E.disc = 0, {
+    rw h,
+    simp,
+  },
+  field_simp [pow_succ, C.hu, h],
+  ring,
+end
+
 def linear_change_of_variable.change_affine_point_back {K : Type*} [field K]
 (C : linear_change_of_variable K) (x y : K) : K × K :=
 ( C.u^2*x + C.r, C.u^3*y + C.u^2*C.s*x + C.t )
@@ -340,6 +474,15 @@ def linear_change_of_variable.change_projective_point_back {K : Type*} [field K]
 def linear_change_of_variable.change_affine_point {K : Type*} [field K]
 (C : linear_change_of_variable K) (x y : K) : K × K :=
 ( x/C.u^2 - C.r/C.u^2, y/C.u^3 - C.s*x/C.u^3 + (C.r*C.s-C.t)/C.u^3 )
+
+lemma linear_change_of_variable.change_affine_point' {K : Type*} [field K]
+(C : linear_change_of_variable K) (x y : K) :
+(C.change_affine_point x y).1 = x/C.u^2 - C.r/C.u^2
+∧ (C.change_affine_point x y).2 = y/C.u^3 - C.s*x/C.u^3 + (C.r*C.s-C.t)/C.u^3 :=
+begin
+  unfold linear_change_of_variable.change_affine_point,
+  simp,
+end
 
 def linear_change_of_variable.change_projective_point {K : Type*} [field K]
 (C : linear_change_of_variable K) (X Y Z : K) : K × K × K :=
@@ -403,16 +546,11 @@ end
 lemma weierstrass_equation.change_curve_preserve_affine_point
 {K : Type*} [field K] (E : weierstrass_equation K)
 (C : linear_change_of_variable K) (x y : K) :
-let P' := C.change_affine_point x y in
-E.affine_point_on_curve x y ↔ (C.change_curve E).affine_point_on_curve P'.1 P'.2 :=
+E.affine_point_on_curve x y ↔ (C.change_curve E).affine_point_on_curve
+(C.change_affine_point x y).1 (C.change_affine_point x y).2 :=
 begin
-  intro P',
-  have hP' := calc (P'.1, P'.2) = P' : rfl
-  ... = C.change_affine_point x y : rfl,
-  unfold linear_change_of_variable.change_affine_point at hP',
-  rw prod.mk.inj_iff at hP',
-  cases hP' with h1 h2,
-  have key := calc (C.change_curve E).eval_at_affine_point P'.1 P'.2
+  cases C.change_affine_point' x y with h1 h2,
+  have key := calc (C.change_curve E).eval_at_affine_point (C.change_affine_point x y).1 (C.change_affine_point x y).2
   = (E.eval_at_affine_point x y)/C.u^6 : by {
     unfold weierstrass_equation.eval_at_affine_point
     linear_change_of_variable.change_curve
@@ -433,16 +571,11 @@ end
 lemma weierstrass_equation.change_curve_preserve_affine_smooth_point
 {K : Type*} [field K] (E : weierstrass_equation K)
 (C : linear_change_of_variable K) (x y : K) :
-let P' := C.change_affine_point x y in
-E.affine_point_smooth x y ↔ (C.change_curve E).affine_point_smooth P'.1 P'.2 :=
+E.affine_point_smooth x y ↔ (C.change_curve E).affine_point_smooth
+(C.change_affine_point x y).1 (C.change_affine_point x y).2 :=
 begin
-  intro P',
-  have hP' := calc (P'.1, P'.2) = P' : rfl
-  ... = C.change_affine_point x y : rfl,
-  unfold linear_change_of_variable.change_affine_point at hP',
-  rw prod.mk.inj_iff at hP',
-  cases hP' with h1 h2,
-  have keyX := calc (C.change_curve E).eval_dx_at_affine_point P'.1 P'.2
+  cases C.change_affine_point' x y with h1 h2,
+  have keyX := calc (C.change_curve E).eval_dx_at_affine_point (C.change_affine_point x y).1 (C.change_affine_point x y).2
   = (E.eval_dx_at_affine_point x y + C.s * E.eval_dy_at_affine_point x y)/C.u^4 : by {
     unfold weierstrass_equation.eval_dx_at_affine_point
     weierstrass_equation.eval_dy_at_affine_point
@@ -456,7 +589,7 @@ begin
     field_simp [pow_succ, C.hu],
     ring,
   },
-  have keyY := calc (C.change_curve E).eval_dy_at_affine_point P'.1 P'.2
+  have keyY := calc (C.change_curve E).eval_dy_at_affine_point (C.change_affine_point x y).1 (C.change_affine_point x y).2
   = (E.eval_dy_at_affine_point x y)/C.u^3 : by {
     unfold weierstrass_equation.eval_dy_at_affine_point
     linear_change_of_variable.change_curve
@@ -531,7 +664,26 @@ lemma weierstrass_equation.smooth_iff_non_singular
 E.smooth ↔ E.non_singular :=
 begin
   rw E.smooth_iff_affine_smooth,
-  sorry,
+  split, {
+    sorry,
+  },
+  intro h1,
+  by_cases h : ∃ x y : K, E.affine_point_on_curve x y ∧ ¬ E.affine_point_smooth x y, {
+    exfalso,
+    rcases h with ⟨ x0, y0, h2, h3 ⟩,
+    let C : linear_change_of_variable K := linear_change_of_variable.mk 1 x0 0 y0 (calc (1 : K) ≠ 0 : one_ne_zero),
+    let E' : weierstrass_equation K := C.change_curve E,
+    let P' := C.change_affine_point x0 y0,
+    have hP' : P' = C.change_affine_point x0 y0 := rfl,
+    unfold linear_change_of_variable.change_affine_point at hP',
+    replace hP' := calc (P'.1, P'.2) = P' : rfl
+    ... = (0, 0) : by { simp at hP', exact hP', },
+    rw prod.mk.inj_iff at hP',
+    have := E.change_curve_preserve_affine_point C x0 y0,
+    sorry,
+  },
+  push_neg at h,
+  exact h,
 end
 
 lemma exists_j0 : ∃ E : weierstrass_equation ℚ, E.non_singular ∧ E.j = 0 :=
