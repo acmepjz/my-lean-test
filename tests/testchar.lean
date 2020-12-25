@@ -48,3 +48,20 @@ example (K : Type*) [field K] (h : (2 : K) ≠ 0) (x : K) : (x * 2) / 2 = x :=
 begin
   field_simp [h],
 end
+
+lemma dvd_char_is_zero
+{K : Type*} [field K] {p : ℕ} (hp : ring_char K = p) (n : ℤ) (hdvd : (p : ℤ) ∣ n) : (n : K) = 0 :=
+begin
+  rw ring_char.eq_iff at hp,
+  rw @char_p.int_cast_eq_zero_iff K _ p hp n,
+  exact hdvd,
+end
+
+lemma cong_char_is_eq
+{K : Type*} [field K] {p : ℕ} (hp : ring_char K = p) (a b : ℤ) (hdvd : (p : ℤ) ∣ (b - a)) : (a : K) = (b : K) :=
+begin
+  rw ring_char.eq_iff at hp,
+  rw @char_p.int_coe_eq_int_coe_iff K _ p hp a b,
+  rw int.modeq.modeq_iff_dvd,
+  exact hdvd,
+end
