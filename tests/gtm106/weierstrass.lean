@@ -1,7 +1,10 @@
 import algebra.field
+import algebra.char_zero
+import algebra.char_p
 import data.int.basic
 import data.rat.basic
 import tests.gtm106.naive_plane
+import tests.testchar
 import tactic
 
 noncomputable theory
@@ -448,6 +451,26 @@ begin
   },
   field_simp [pow_succ, C.hu, h],
   ring,
+end
+
+lemma weierstrass_equation.normal_form_char_neq_2 {K : Type*} [field K]
+(E : weierstrass_equation K) (hchar2 : ring_char K ≠ 2)
+: ∃ (C : linear_change_of_variable K),
+(C.change_curve E).a1 = 0 ∧ (C.change_curve E).a3 = 0 :=
+begin
+  replace hchar2 := prime_neq_char_is_non_zero K 2 (by norm_num) hchar2,
+  norm_cast at hchar2,
+  let C : linear_change_of_variable K := linear_change_of_variable.mk 1 0 (-E.a1/2) (-E.a3/2) (by simp),
+  use C,
+  unfold linear_change_of_variable.change_curve
+  weierstrass_equation.a1
+  weierstrass_equation.a3
+  linear_change_of_variable.u
+  linear_change_of_variable.r
+  linear_change_of_variable.s
+  linear_change_of_variable.t,
+  field_simp [hchar2],
+  simp [mul_comm],
 end
 
 def linear_change_of_variable.change_affine_point_back {K : Type*} [field K]
