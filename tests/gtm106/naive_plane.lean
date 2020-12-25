@@ -10,6 +10,7 @@ noncomputable theory
 structure affine_plane_point (K : Type*) [field K] :=
 mk :: (x y : K)
 
+@[ext]
 structure projective_plane_point (K : Type*) [field K] :=
 mk :: (X Y Z : K) (h : ¬ (X = 0 ∧ Y = 0 ∧ Z = 0))
 
