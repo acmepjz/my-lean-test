@@ -520,23 +520,26 @@ begin
 end
 -/
 
-lemma weierstrass_equation.smooth_iff_affine_smooth
-{K : Type*} [field K] (E : weierstrass_equation K) :
-E.smooth ↔ E.affine_smooth :=
+lemma linear_change_of_variable.preserve_smooth {K : Type*} [field K]
+(C : linear_change_of_variable K) (E : weierstrass_equation K)
+: E.smooth ↔ (C.change_curve E).smooth :=
 begin
+  repeat { rw weierstrass_equation.smooth_iff_affine_smooth },
+  unfold weierstrass_equation.affine_smooth,
   split, {
     intros h P,
-    rw [E.affine_point_is_projective_point, E.affine_point_smooth_iff_projective_point_smooth],
-    exact h P.to_projective_plane,
+    replace h := h (C.inverse.change_affine_point P),
+    rw E.change_curve_preserve_affine_point C _ at h,
+    rw E.change_curve_preserve_affine_smooth_point C _ at h,
+    rw linear_change_of_variable.change_affine_point.comp _ _ P at h,
+    rw linear_change_of_variable.inv_comp _ at h,
+    rw linear_change_of_variable.change_affine_point.id at h,
+    exact h,
+  }, {
+    intros h P,
+    replace h := h (C.change_affine_point P),
+    rw E.change_curve_preserve_affine_point C _,
+    rw E.change_curve_preserve_affine_smooth_point C _,
+    exact h,
   },
-  intros h P h1,
-  rw E.projective_point_is_affine_point at h1,
-  rcases h1 with h1 | ⟨ h1, h2 ⟩, {
-    rw weierstrass_equation.projective_point_smooth.equal E h1,
-    exact E.infinite_point_is_smooth,
-  },
-  replace h := h P.to_affine_plane,
-  rw E.affine_point_smooth_iff_projective_point_smooth at h,
-  rw ← weierstrass_equation.projective_point_smooth.equal E (P.embed_invertible h1) at h,
-  exact h h2,
 end

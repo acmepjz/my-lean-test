@@ -293,3 +293,24 @@ def weierstrass_equation.non_singular {K : Type*} [field K] (E : weierstrass_equ
 
 def weierstrass_equation.j {K : Type*} [field K] (E : weierstrass_equation K) : K :=
 E.c4^3/E.disc
+
+lemma weierstrass_equation.smooth_iff_affine_smooth
+{K : Type*} [field K] (E : weierstrass_equation K) :
+E.smooth ↔ E.affine_smooth :=
+begin
+  split, {
+    intros h P,
+    rw [E.affine_point_is_projective_point, E.affine_point_smooth_iff_projective_point_smooth],
+    exact h P.to_projective_plane,
+  },
+  intros h P h1,
+  rw E.projective_point_is_affine_point at h1,
+  rcases h1 with h1 | ⟨ h1, h2 ⟩, {
+    rw weierstrass_equation.projective_point_smooth.equal E h1,
+    exact E.infinite_point_is_smooth,
+  },
+  replace h := h P.to_affine_plane,
+  rw E.affine_point_smooth_iff_projective_point_smooth at h,
+  rw ← weierstrass_equation.projective_point_smooth.equal E (P.embed_invertible h1) at h,
+  exact h h2,
+end

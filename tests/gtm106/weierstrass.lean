@@ -16,18 +16,96 @@ lemma weierstrass_equation.smooth_iff_non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :
 E.smooth ↔ E.non_singular :=
 begin
-  rw E.smooth_iff_affine_smooth,
   split, {
+    by_cases hchar2 : ring_char K = 2, {
+      rcases E.model_of_char_2 hchar2 with ⟨ hj, C, ha1, ha3, ha4 ⟩ | ⟨ hj, C, ha1, ha2 ⟩, {
+        rw C.preserve_smooth E,
+        rw C.preserve_non_singular E,
+        rw weierstrass_equation.smooth_iff_affine_smooth,
+        set E' := C.change_curve E with hE,
+        intros hsmooth hdisc,
+        have hdisc' : E'.disc = E'.a6 := by {
+          unfold weierstrass_equation.disc
+          weierstrass_equation.b2
+          weierstrass_equation.b4
+          weierstrass_equation.b6
+          weierstrass_equation.b8
+          weierstrass_equation.a1
+          weierstrass_equation.a2
+          weierstrass_equation.a3
+          weierstrass_equation.a4
+          weierstrass_equation.a6,
+          rw [ha1, ha3, ha4],
+          simp [zero_pow],
+          have h := dvd_char_is_zero hchar2 4 (by norm_num), norm_cast at h, rw h, clear h,
+          ring,
+          calc -E'.a6 = E'.a6 - 2*E'.a6 : by ring
+          ... = E'.a6 : by {
+            have h := dvd_char_is_zero hchar2 2 (by norm_num), norm_cast at h, rw h, clear h,
+            ring,
+          },
+        },
+        rw hdisc' at hdisc,
+        let P : affine_plane_point K := affine_plane_point.mk 0 0,
+        replace hsmooth := hsmooth P,
+        unfold weierstrass_equation.affine_point_on_curve
+        weierstrass_equation.affine_point_smooth
+        weierstrass_equation.eval_at_affine_point
+        weierstrass_equation.eval_dx_at_affine_point
+        weierstrass_equation.eval_dy_at_affine_point
+        affine_plane_point.x
+        affine_plane_point.y at hsmooth,
+        rw [ha1, ha3, ha4, hdisc] at hsmooth,
+        simp [zero_pow] at hsmooth,
+        exact hsmooth,
+      }, {
+        rw C.preserve_smooth E,
+        rw C.preserve_non_singular E,
+        rw weierstrass_equation.smooth_iff_affine_smooth,
+        set E' := C.change_curve E with hE,
+        intros hsmooth hdisc,
+        have hdisc' : E'.disc = E'.a3^4 := by {
+          unfold weierstrass_equation.disc
+          weierstrass_equation.b2
+          weierstrass_equation.b4
+          weierstrass_equation.b6
+          weierstrass_equation.b8
+          weierstrass_equation.a1
+          weierstrass_equation.a2
+          weierstrass_equation.a3
+          weierstrass_equation.a4
+          weierstrass_equation.a6,
+          rw [ha1, ha2],
+          simp [zero_pow],
+          ring,
+          have h := dvd_char_is_zero hchar2 64 (by norm_num), norm_cast at h, rw h, clear h,
+          have h := dvd_char_is_zero hchar2 432 (by norm_num), norm_cast at h, rw h, clear h,
+          have h := dvd_char_is_zero hchar2 216 (by norm_num), norm_cast at h, rw h, clear h,
+          have h := cong_char_is_eq hchar2 27 (-1) (by norm_num), norm_cast at h, rw h, clear h,
+          ring, simp,
+        },
+        rw hdisc' at hdisc,
+        field_simp at hdisc,
+        -- ERROR: in this case the singular point is defined over an algebraic extension of K
+        sorry,
+      },
+    },
+    rcases E.model_of_char_neq_2 hchar2 with ⟨ C, ha1, ha3 ⟩,
+    rw C.preserve_smooth E,
+    rw C.preserve_non_singular E,
+    set E' := C.change_curve E with hE,
+    intros hsmooth hdisc,
+    -- TODO: construct a singular point for E'
     sorry,
   },
+  rw E.smooth_iff_affine_smooth,
   intro h1,
   by_cases h : ∃ P : affine_plane_point K, E.affine_point_on_curve P ∧ ¬ E.affine_point_smooth P, {
     exfalso,
     rcases h with ⟨ P, h2, h3 ⟩,
     let C : linear_change_of_variable K := linear_change_of_variable.mk 1 P.x 0 P.y (calc (1 : K) ≠ 0 : one_ne_zero),
     let E' : weierstrass_equation K := C.change_curve E,
-    let P' := C.change_affine_point P,
-    have hP' : P' = C.change_affine_point P := rfl,
+    set! P' := C.change_affine_point P with hP',
     unfold linear_change_of_variable.change_affine_point at hP',
     rw affine_plane_point.ext_iff at hP',
     unfold affine_plane_point.x
