@@ -61,12 +61,12 @@ begin
 end
 
 lemma weierstrass_equation.non_singular_implies_disc_non_zero
-{K : Type*} [field K] (E : weierstrass_equation K) (hperfect : ring_char K = 2 → my_perfect_field K):
+{K : Type*} [field K] (E : weierstrass_equation K) (hperfect : ring_char K = 2 ∨ ring_char K = 3 → my_perfect_field K):
 E.non_singular → E.non_singular' :=
 begin
   by_cases hchar2 : ring_char K = 2, {
     replace hperfect : nth_power_surjective K 2 := by {
-      have h := hperfect hchar2,
+      have h := hperfect (by { left, exact hchar2, }),
       unfold my_perfect_field at h,
       rw hchar2 at h,
       cases h with h h, { contradiction, },
@@ -130,9 +130,44 @@ begin
   rcases E.have_model_of_char_neq_2 hchar2 with ⟨ C, ha1, ha3 ⟩,
   rw C.preserve_non_singular E,
   rw C.preserve_non_singular' E,
+  rw weierstrass_equation.non_singular_iff_affine_non_singular,
   set E' := C.change_curve E with hE,
   intros hsmooth hdisc,
-  rw E'.disc_of_model_of_char_neq_2 ⟨ ha1, ha3 ⟩ at hdisc,
-  -- TODO: construct a singular point for E'
-  sorry,
+  let f : monic_cubic_poly K := monic_cubic_poly.mk E'.a2 E'.a4 E'.a6,
+  have hdisc' : E'.disc = 16*f.disc := by {
+    rw E'.disc_of_model_of_char_neq_2 ⟨ ha1, ha3 ⟩,
+    unfold monic_cubic_poly.disc,
+    ring,
+  },
+  have h16 := power_of_prime_neq_char_is_non_zero K 16 2 4 (by norm_num) (by norm_num) hchar2,
+  norm_num at h16,
+  field_simp [hdisc, h16] at hdisc',
+  rcases f.disc_zero_implies_has_multiple_root hperfect hdisc' with ⟨ x, h1, h2 ⟩,
+  unfold monic_cubic_poly.eval_at
+  monic_cubic_poly.a
+  monic_cubic_poly.b
+  monic_cubic_poly.c at h1,
+  replace h1 := calc x^3 = -E'.a2*x^2 - E'.a4*x - E'.a6 + (x^3 + E'.a2*x^2 + E'.a4*x + E'.a6) : by ring
+  ... = -E'.a2*x^2 - E'.a4*x - E'.a6 : by { rw h1, ring, },
+  unfold monic_cubic_poly.eval_dx_at
+  monic_cubic_poly.a
+  monic_cubic_poly.b at h2,
+  replace h2 := calc 3*x^2 = -2*E'.a2*x - E'.a4 + (3*x^2 + 2*E'.a2*x + E'.a4) : by ring
+  ... = -2*E'.a2*x - E'.a4 : by { rw h2, ring, },
+  let P := affine_plane_point.mk x 0,
+  have hP : E'.affine_point_on_curve P := by {
+    unfold weierstrass_equation.affine_point_on_curve
+    weierstrass_equation.eval_at_affine_point
+    affine_plane_point.x
+    affine_plane_point.y,
+    rw [h1, ha1, ha3], ring,
+  },
+  replace hsmooth := (hsmooth P hP).2,
+  unfold weierstrass_equation.eval_dx_at_affine_point
+  weierstrass_equation.eval_dy_at_affine_point
+  affine_plane_point.x
+  affine_plane_point.y at hsmooth,
+  rw [h2, ha1, ha3] at hsmooth,
+  simp at hsmooth,
+  exact hsmooth,
 end
