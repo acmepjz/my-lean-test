@@ -44,6 +44,14 @@ begin
   exact hneq,
 end
 
+lemma power_of_prime_neq_char_is_non_zero
+(K : Type*) [field K] (n : ℕ) (q : ℕ) (a : ℕ) (hq : nat.prime q) (hn : n = q^a) (hneq : ring_char K ≠ q) : (n : K) ≠ 0 :=
+begin
+  have h := prime_neq_char_is_non_zero K q hq hneq,
+  rw hn,
+  field_simp [h],
+end
+
 example (K : Type*) [field K] (h : (2 : K) ≠ 0) (x : K) : (x * 2) / 2 = x :=
 begin
   field_simp [h],

@@ -267,11 +267,11 @@ begin
   ring,
 end
 
-lemma linear_change_of_variable.preserve_non_singular {K : Type*} [field K]
+lemma linear_change_of_variable.preserve_non_singular' {K : Type*} [field K]
 (C : linear_change_of_variable K) (E : weierstrass_equation K)
-: E.non_singular ↔ (C.change_curve E).non_singular :=
+: E.non_singular' ↔ (C.change_curve E).non_singular' :=
 begin
-  unfold weierstrass_equation.non_singular,
+  unfold weierstrass_equation.non_singular',
   rw [C.disc],
   field_simp [C.hu],
 end
@@ -451,10 +451,10 @@ begin
   field_simp [C.hu],
 end
 
-lemma weierstrass_equation.change_curve_preserve_affine_smooth_point
+lemma weierstrass_equation.change_curve_preserve_affine_regular_point
 {K : Type*} [field K] (E : weierstrass_equation K)
 (C : linear_change_of_variable K) (P : affine_plane_point K) :
-E.affine_point_smooth P ↔ (C.change_curve E).affine_point_smooth
+E.affine_point_regular P ↔ (C.change_curve E).affine_point_regular
 (C.change_affine_point P) :=
 begin
   have keyX := calc (C.change_curve E).eval_dx_at_affine_point (C.change_affine_point P)
@@ -488,7 +488,7 @@ begin
     field_simp [pow_succ, C.hu],
     ring,
   },
-  unfold weierstrass_equation.affine_point_smooth,
+  unfold weierstrass_equation.affine_point_regular,
   split, {
     intro h,
     use (E.change_curve_preserve_affine_point C P).1 h.1,
@@ -520,17 +520,17 @@ begin
 end
 -/
 
-lemma linear_change_of_variable.preserve_smooth {K : Type*} [field K]
+lemma linear_change_of_variable.preserve_non_singular {K : Type*} [field K]
 (C : linear_change_of_variable K) (E : weierstrass_equation K)
-: E.smooth ↔ (C.change_curve E).smooth :=
+: E.non_singular ↔ (C.change_curve E).non_singular :=
 begin
-  repeat { rw weierstrass_equation.smooth_iff_affine_smooth },
-  unfold weierstrass_equation.affine_smooth,
+  repeat { rw weierstrass_equation.non_singular_iff_affine_non_singular },
+  unfold weierstrass_equation.affine_non_singular,
   split, {
     intros h P,
     replace h := h (C.inverse.change_affine_point P),
     rw E.change_curve_preserve_affine_point C _ at h,
-    rw E.change_curve_preserve_affine_smooth_point C _ at h,
+    rw E.change_curve_preserve_affine_regular_point C _ at h,
     rw linear_change_of_variable.change_affine_point.comp _ _ P at h,
     rw linear_change_of_variable.inv_comp _ at h,
     rw linear_change_of_variable.change_affine_point.id at h,
@@ -539,7 +539,7 @@ begin
     intros h P,
     replace h := h (C.change_affine_point P),
     rw E.change_curve_preserve_affine_point C _,
-    rw E.change_curve_preserve_affine_smooth_point C _,
+    rw E.change_curve_preserve_affine_regular_point C _,
     exact h,
   },
 end

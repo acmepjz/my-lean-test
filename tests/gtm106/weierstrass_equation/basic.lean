@@ -24,13 +24,13 @@ def weierstrass_equation.affine_point_on_curve
 {K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
 E.eval_at_affine_point P = 0
 
-def weierstrass_equation.affine_point_smooth
+def weierstrass_equation.affine_point_regular
 {K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
 E.affine_point_on_curve P ∧ ¬ (E.eval_dx_at_affine_point P = 0 ∧ E.eval_dy_at_affine_point P = 0)
 
-def weierstrass_equation.affine_smooth
+def weierstrass_equation.affine_non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :=
-∀ P : affine_plane_point K, E.affine_point_on_curve P → E.affine_point_smooth P
+∀ P : affine_plane_point K, E.affine_point_on_curve P → E.affine_point_regular P
 
 def weierstrass_equation.eval_at_projective_point
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) : K :=
@@ -69,15 +69,15 @@ begin
   field_simp [ha],
 end
 
-def weierstrass_equation.projective_point_smooth
+def weierstrass_equation.projective_point_regular
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
 E.projective_point_on_curve P ∧ ¬ (E.eval_dX_at_projective_point P = 0
 ∧ E.eval_dY_at_projective_point P = 0 ∧ E.eval_dZ_at_projective_point P = 0)
 
-lemma weierstrass_equation.projective_point_smooth.equal
+lemma weierstrass_equation.projective_point_regular.equal
 {K : Type*} [field K] (E : weierstrass_equation K) {P P' : projective_plane_point K}
 (h : P.is_equal P') :
-E.projective_point_smooth P ↔ E.projective_point_smooth P' :=
+E.projective_point_regular P ↔ E.projective_point_regular P' :=
 begin
   have hh := h,
   rcases hh with ⟨ a, ha, hX, hY, hZ ⟩,
@@ -118,9 +118,9 @@ begin
   },
 end
 
-def weierstrass_equation.smooth
+def weierstrass_equation.non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :=
-∀ P : projective_plane_point K, E.projective_point_on_curve P → E.projective_point_smooth P
+∀ P : projective_plane_point K, E.projective_point_on_curve P → E.projective_point_regular P
 
 lemma weierstrass_equation.affine_point_is_projective_point
 {K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :
@@ -140,9 +140,9 @@ begin
   rw key,
 end
 
-lemma weierstrass_equation.affine_point_smooth_iff_projective_point_smooth
+lemma weierstrass_equation.affine_point_regular_iff_projective_point_regular
 {K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :
-E.affine_point_smooth P ↔ E.projective_point_smooth P.to_projective_plane :=
+E.affine_point_regular P ↔ E.projective_point_regular P.to_projective_plane :=
 begin
   have keyX := calc E.eval_dX_at_projective_point P.to_projective_plane = E.eval_dx_at_affine_point P : by {
     unfold affine_plane_point.to_projective_plane
@@ -174,8 +174,8 @@ begin
     weierstrass_equation.eval_dy_at_affine_point,
     ring,
   },
-  unfold weierstrass_equation.affine_point_smooth
-  weierstrass_equation.projective_point_smooth,
+  unfold weierstrass_equation.affine_point_regular
+  weierstrass_equation.projective_point_regular,
   rw [← E.affine_point_is_projective_point P, keyX, keyY],
   unfold weierstrass_equation.affine_point_on_curve,
   split, {
@@ -251,10 +251,10 @@ begin
   exact h2,
 end
 
-lemma weierstrass_equation.infinite_point_is_smooth
-{K : Type*} [field K] (E : weierstrass_equation K) : E.projective_point_smooth (projective_plane_point.infinite_point_Y K) :=
+lemma weierstrass_equation.infinite_point_is_regular
+{K : Type*} [field K] (E : weierstrass_equation K) : E.projective_point_regular (projective_plane_point.infinite_point_Y K) :=
 begin
-  unfold weierstrass_equation.projective_point_smooth
+  unfold weierstrass_equation.projective_point_regular
   weierstrass_equation.projective_point_on_curve
   projective_plane_point.infinite_point_Y
   projective_plane_point.X
@@ -289,28 +289,58 @@ def weierstrass_equation.c6 {K : Type*} [field K] (E : weierstrass_equation K) :
 def weierstrass_equation.disc {K : Type*} [field K] (E : weierstrass_equation K) : K :=
 -E.b2^2*E.b8 - 8*E.b4^3 - 27*E.b6^2 + 9*E.b2*E.b4*E.b6
 
-def weierstrass_equation.non_singular {K : Type*} [field K] (E : weierstrass_equation K) := E.disc ≠ 0
+lemma weierstrass_equation.b8_mul_4 {K : Type*} [field K] (E : weierstrass_equation K) :
+4*E.b8 = E.b2*E.b6 - E.b4^2 :=
+begin
+  unfold weierstrass_equation.b8
+  weierstrass_equation.b6
+  weierstrass_equation.b4
+  weierstrass_equation.b2,
+  ring,
+end
+
+lemma weierstrass_equation.disc_mul_1728 {K : Type*} [field K] (E : weierstrass_equation K) :
+1728*E.disc = E.c4^3 - E.c6^2 :=
+begin
+  unfold weierstrass_equation.disc
+  weierstrass_equation.c4
+  weierstrass_equation.c6
+  weierstrass_equation.b8
+  weierstrass_equation.b6
+  weierstrass_equation.b4
+  weierstrass_equation.b2,
+  ring,
+end
+
+def weierstrass_equation.non_singular' {K : Type*} [field K] (E : weierstrass_equation K) :=
+E.disc ≠ 0
+
+def weierstrass_equation.has_node' {K : Type*} [field K] (E : weierstrass_equation K) :=
+E.disc = 0 ∧ E.c4 ≠ 0
+
+def weierstrass_equation.has_cusp' {K : Type*} [field K] (E : weierstrass_equation K) :=
+E.disc = 0 ∧ E.c4 = 0
 
 def weierstrass_equation.j {K : Type*} [field K] (E : weierstrass_equation K) : K :=
 E.c4^3/E.disc
 
-lemma weierstrass_equation.smooth_iff_affine_smooth
+lemma weierstrass_equation.non_singular_iff_affine_non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :
-E.smooth ↔ E.affine_smooth :=
+E.non_singular ↔ E.affine_non_singular :=
 begin
   split, {
     intros h P,
-    rw [E.affine_point_is_projective_point, E.affine_point_smooth_iff_projective_point_smooth],
+    rw [E.affine_point_is_projective_point, E.affine_point_regular_iff_projective_point_regular],
     exact h P.to_projective_plane,
   },
   intros h P h1,
   rw E.projective_point_is_affine_point at h1,
   rcases h1 with h1 | ⟨ h1, h2 ⟩, {
-    rw weierstrass_equation.projective_point_smooth.equal E h1,
-    exact E.infinite_point_is_smooth,
+    rw weierstrass_equation.projective_point_regular.equal E h1,
+    exact E.infinite_point_is_regular,
   },
   replace h := h P.to_affine_plane,
-  rw E.affine_point_smooth_iff_projective_point_smooth at h,
-  rw ← weierstrass_equation.projective_point_smooth.equal E (P.embed_invertible h1) at h,
+  rw E.affine_point_regular_iff_projective_point_regular at h,
+  rw ← weierstrass_equation.projective_point_regular.equal E (P.embed_invertible h1) at h,
   exact h h2,
 end
