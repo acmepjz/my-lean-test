@@ -107,7 +107,8 @@ def monic_cubic_poly.disc {K : Type*} [field K] (f : monic_cubic_poly K) : K
 := -4*f.a^3*f.c + f.a^2*f.b^2 - 4*f.b^3 - 27*f.c^2 + 18*f.a*f.b*f.c
 
 lemma monic_cubic_poly.disc_zero_implies_has_multiple_root
-{K : Type*} [field K] (f : monic_cubic_poly K) (hperfect : ring_char K = 2 ∨ ring_char K = 3 → my_perfect_field K):
+{K : Type*} [field K] (f : monic_cubic_poly K)
+(hperfect : ring_char K = 2 ∨ (ring_char K = 3 ∧ f.a = 0) → my_perfect_field K):
 f.disc = 0 → f.has_multiple_root :=
 begin
   intro hdisc,
@@ -124,17 +125,17 @@ begin
       conv in (8 * f.a ^ 3 * f.c) { rw hh8, },
       simp, ring,
     },
-    replace hperfect : nth_power_surjective K 3 := by {
-      have h := hperfect (by { right, exact hchar3, }),
-      unfold my_perfect_field at h,
-      rw hchar3 at h,
-      cases h with h h, { contradiction, },
-      exact h,
-    },
     have hchar2 : ring_char K ≠ 2 := by { rw hchar3, norm_num, },
     have h2 := prime_neq_char_is_non_zero K 2 (by norm_num) hchar2, norm_cast at h2,
     have h4 := power_of_prime_neq_char_is_non_zero K 4 2 2 (by norm_num) (by norm_num) hchar2, norm_cast at h4,
     by_cases ha : f.a = 0, {
+      replace hperfect : nth_power_surjective K 3 := by {
+        have h := hperfect (by { right, exact ⟨ hchar3, ha ⟩, }),
+        unfold my_perfect_field at h,
+        rw hchar3 at h,
+        cases h with h h, { contradiction, },
+        exact h,
+      },
       rw [hdisc', ha] at hdisc,
       field_simp [zero_pow, h4] at hdisc,
       cases hperfect (-f.c) with x hx,
