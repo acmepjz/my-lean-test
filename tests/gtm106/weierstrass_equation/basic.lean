@@ -28,6 +28,20 @@ def weierstrass_equation.affine_point_regular
 {K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
 E.affine_point_on_curve P ∧ ¬ (E.eval_dx_at_affine_point P = 0 ∧ E.eval_dy_at_affine_point P = 0)
 
+def weierstrass_equation.affine_point_singular
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
+E.affine_point_on_curve P ∧ E.eval_dx_at_affine_point P = 0 ∧ E.eval_dy_at_affine_point P = 0
+
+lemma weierstrass_equation.affine_point_is_regular_or_singular
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :
+E.affine_point_on_curve P → (¬ E.affine_point_regular P ↔ E.affine_point_singular P) :=
+begin
+  intro h1,
+  unfold weierstrass_equation.affine_point_regular
+  weierstrass_equation.affine_point_singular,
+  finish,
+end
+
 def weierstrass_equation.affine_non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :=
 ∀ P : affine_plane_point K, E.affine_point_on_curve P → E.affine_point_regular P
@@ -343,4 +357,77 @@ begin
   rw E.affine_point_regular_iff_projective_point_regular at h,
   rw ← weierstrass_equation.projective_point_regular.equal E (P.embed_invertible h1) at h,
   exact h h2,
+end
+
+/-
+def weierstrass_equation.eval_dxdx_at_affine_point
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+-6*P.x - 2*E.a2
+
+def weierstrass_equation.eval_dxdy_at_affine_point
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+E.a1
+
+def weierstrass_equation.eval_dydy_at_affine_point
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+2
+
+def weierstrass_equation.eval_hessian_at_affine_point
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+(E.eval_dxdx_at_affine_point P)*(E.eval_dydy_at_affine_point P) - (E.eval_dxdy_at_affine_point P)^2
+-/
+
+def weierstrass_equation.eval_hessian_at_affine_point
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
+-12*P.x - E.b2
+
+def weierstrass_equation.affine_point_is_node
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
+E.affine_point_singular P ∧ E.eval_hessian_at_affine_point P ≠ 0
+
+def weierstrass_equation.affine_point_is_cusp
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
+E.affine_point_singular P ∧ E.eval_hessian_at_affine_point P = 0
+
+lemma weierstrass_equation.singular_point_is_node_or_cusp
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K) :
+E.affine_point_singular P → (¬ E.affine_point_is_node P ↔ E.affine_point_is_cusp P) :=
+begin
+  intro h1,
+  unfold weierstrass_equation.affine_point_is_node
+  weierstrass_equation.affine_point_is_cusp,
+  finish,
+end
+
+def weierstrass_equation.has_affine_singular_point
+{K : Type*} [field K] (E : weierstrass_equation K) :=
+∃ P : affine_plane_point K, E.affine_point_singular P
+
+def weierstrass_equation.has_node
+{K : Type*} [field K] (E : weierstrass_equation K) :=
+∃ P : affine_plane_point K, E.affine_point_is_node P
+
+def weierstrass_equation.has_cusp
+{K : Type*} [field K] (E : weierstrass_equation K) :=
+∃ P : affine_plane_point K, E.affine_point_is_cusp P
+
+lemma weierstrass_equation.singular_iff_has_affine_singular_point
+{K : Type*} [field K] (E : weierstrass_equation K) :
+¬ E.non_singular ↔ E.has_affine_singular_point :=
+begin
+  rw E.non_singular_iff_affine_non_singular,
+  split, {
+    intro h,
+    unfold weierstrass_equation.affine_non_singular at h,
+    push_neg at h,
+    rcases h with ⟨ P, h1, h2 ⟩,
+    use [P, h1],
+    unfold weierstrass_equation.affine_point_regular at h2,
+    finish,
+  },
+  intros h1 h,
+  rcases h1 with ⟨ P, h1, h2 ⟩,
+  replace h := h P h1,
+  unfold weierstrass_equation.affine_point_regular at h,
+  finish,
 end

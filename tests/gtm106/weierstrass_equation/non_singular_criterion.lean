@@ -11,53 +11,75 @@ import tactic
 
 noncomputable theory
 
+def weierstrass_equation.is_singular_model
+{K : Type*} [field K] (E : weierstrass_equation K) :=
+E.a3 = 0 ∧ E.a4 = 0 ∧ E.a6 = 0
+
+lemma weierstrass_equation.c4_of_singular_model {K : Type*} [field K]
+(E : weierstrass_equation K) (h : E.is_singular_model) :
+E.c4 = E.b2^2 :=
+begin
+  unfold weierstrass_equation.c4
+  weierstrass_equation.b2
+  weierstrass_equation.b4,
+  rw [h.1, h.2.1],
+  ring,
+end
+
+lemma weierstrass_equation.disc_of_singular_model {K : Type*} [field K]
+(E : weierstrass_equation K) (h : E.is_singular_model) :
+E.disc = 0 :=
+begin
+  unfold weierstrass_equation.disc
+  weierstrass_equation.b2
+  weierstrass_equation.b4
+  weierstrass_equation.b6
+  weierstrass_equation.b8,
+  rw [h.1, h.2.1, h.2.2],
+  ring,
+end
+
+lemma weierstrass_equation.has_singular_model
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K) (hP : E.affine_point_singular P) :
+∃ C : linear_change_of_variable K, (C.change_curve E).is_singular_model
+∧ (C.change_affine_point P) = affine_plane_point.mk 0 0 :=
+begin
+  let C : linear_change_of_variable K := linear_change_of_variable.mk 1 P.x 0 P.y (by simp),
+  use C,
+  rw E.change_curve_preserve_affine_singular_point C at hP,
+  set E' : weierstrass_equation K := C.change_curve E,
+  set P' := C.change_affine_point P with hP',
+  unfold linear_change_of_variable.change_affine_point at hP',
+  simp at hP',
+  split, {
+    rw affine_plane_point.ext_iff at hP',
+    unfold affine_plane_point.x
+    affine_plane_point.y at hP',
+    unfold weierstrass_equation.affine_point_singular
+    weierstrass_equation.affine_point_on_curve
+    weierstrass_equation.eval_at_affine_point
+    weierstrass_equation.eval_dx_at_affine_point
+    weierstrass_equation.eval_dy_at_affine_point at hP,
+    rw [hP'.1, hP'.2] at hP,
+    simp [zero_pow] at hP,
+    exact ⟨ hP.2.2, hP.2.1, hP.1 ⟩,
+  },
+  exact hP',
+end
+
 lemma weierstrass_equation.disc_non_zero_implies_non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :
 E.non_singular' → E.non_singular :=
 begin
-  rw E.non_singular_iff_affine_non_singular,
+  contrapose,
+  rw E.singular_iff_has_affine_singular_point,
+  rintros ⟨ P, hP ⟩,
+  rcases E.has_singular_model P hP with ⟨ C, h2, h3 ⟩,
+  rw C.preserve_non_singular',
+  set E' : weierstrass_equation K := C.change_curve E,
   intro h1,
-  by_cases h : ∃ P : affine_plane_point K, E.affine_point_on_curve P ∧ ¬ E.affine_point_regular P, {
-    exfalso,
-    rcases h with ⟨ P, h2, h3 ⟩,
-    let C : linear_change_of_variable K := linear_change_of_variable.mk 1 P.x 0 P.y (calc (1 : K) ≠ 0 : one_ne_zero),
-    let E' : weierstrass_equation K := C.change_curve E,
-    set! P' := C.change_affine_point P with hP',
-    unfold linear_change_of_variable.change_affine_point at hP',
-    rw affine_plane_point.ext_iff at hP',
-    unfold affine_plane_point.x
-    affine_plane_point.y at hP',
-    simp at hP',
-    cases hP' with hP'x hP'y,
-    rw E.change_curve_preserve_affine_point C P at h2,
-    replace h2 : E'.affine_point_on_curve P' := h2,
-    rw E.change_curve_preserve_affine_regular_point C P at h3,
-    replace h3 : ¬ E'.affine_point_regular P' := h3,
-    unfold weierstrass_equation.affine_point_regular at h3,
-    push_neg at h3,
-    replace h3 := h3 h2,
-    unfold weierstrass_equation.affine_point_on_curve
-    weierstrass_equation.eval_at_affine_point at h2,
-    rw [hP'x, hP'y] at h2,
-    field_simp [zero_pow] at h2,
-    unfold weierstrass_equation.eval_dx_at_affine_point
-    weierstrass_equation.eval_dy_at_affine_point at h3,
-    rw [hP'x, hP'y] at h3,
-    field_simp [zero_pow] at h3,
-    rw C.preserve_non_singular' at h1,
-    replace h1 : E'.non_singular' := h1,
-    unfold weierstrass_equation.non_singular'
-    weierstrass_equation.disc
-    weierstrass_equation.b8
-    weierstrass_equation.b6
-    weierstrass_equation.b4
-    weierstrass_equation.b2 at h1,
-    rw [h2, h3.1, h3.2] at h1,
-    field_simp [zero_pow] at h1,
-    exact h1,
-  },
-  push_neg at h,
-  exact h,
+  exact h1 (E'.disc_of_singular_model h2),
 end
 
 lemma weierstrass_equation.non_singular_implies_disc_non_zero
@@ -170,4 +192,84 @@ begin
   rw [h2, ha1, ha3] at hsmooth,
   simp at hsmooth,
   exact hsmooth,
+end
+
+lemma weierstrass_equation.at_most_one_singular_point
+{K : Type*} [field K] (E : weierstrass_equation K) (P P' : affine_plane_point K)
+(hP : E.affine_point_singular P) (hP' : E.affine_point_singular P') : P = P' :=
+begin
+  rcases E.has_singular_model P hP with ⟨ C, hsing, h0 ⟩,
+  rw ← linear_change_of_variable.change_affine_point.id P,
+  rw ← linear_change_of_variable.change_affine_point.id P',
+  rw ← C.comp_inv,
+  repeat { rw ← linear_change_of_variable.change_affine_point.comp },
+  rw E.change_curve_preserve_affine_singular_point C _ at hP hP',
+  set Q := C.change_affine_point P,
+  set Q' := C.change_affine_point P',
+  set E' := C.change_curve E,
+  congr,
+  rw [h0, affine_plane_point.ext_iff],
+  unfold affine_plane_point.x affine_plane_point.y,
+  unfold weierstrass_equation.affine_point_singular
+  weierstrass_equation.affine_point_on_curve
+  weierstrass_equation.eval_at_affine_point
+  weierstrass_equation.eval_dx_at_affine_point
+  weierstrass_equation.eval_dy_at_affine_point at hP',
+  rw [hsing.1, hsing.2.1, hsing.2.2] at hP',
+  simp at hP',
+  rcases hP' with ⟨ h1, h2, h3 ⟩,
+  by_cases hx : Q'.x = 0, {
+    rw hx at h1,
+    field_simp [zero_pow] at h1,
+    exact ⟨ hx.symm, h1.symm ⟩,
+  },
+  exfalso,
+  have h4 := calc Q'.x * (E'.a1 * Q'.y - 2 * E'.a2 * Q'.x)
+  = 6 * (Q'.y ^ 2 + E'.a1 * Q'.x * Q'.y - Q'.x ^ 3 - E'.a2 * Q'.x ^ 2)
+  - 2 * Q'.x * (E'.a1 * Q'.y - 3 * Q'.x ^ 2 - 2 * E'.a2 * Q'.x)
+  - 3 * Q'.y * (2 * Q'.y + E'.a1 * Q'.x) : by ring
+  ... = 0 : by { rw [h1, h2, h3], ring, },
+  field_simp [hx] at h4,
+  have hchar3 := calc 3 * Q'.x ^ 2 = (E'.a1 * Q'.y - 2 * E'.a2 * Q'.x)
+  - (E'.a1 * Q'.y - 3 * Q'.x ^ 2 - 2 * E'.a2 * Q'.x) : by ring
+  ... = 0 : by { rw [h2, h4], ring, },
+  field_simp [hx] at hchar3,
+  replace h3 := calc Q'.y = Q'.y + (2 * Q'.y + E'.a1 * Q'.x) : by { rw h3, ring, }
+  ... = E'.a1 * Q'.x : by { ring, rw hchar3, ring, },
+  rw h3 at h4, ring at h4,
+  replace h4 := calc Q'.x * (E'.a1 ^ 2 + (1 - 3) * E'.a2) = Q'.x * E'.a1 ^ 2 - 2 * E'.a2 * Q'.x : by ring
+  ... = 0 : h4,
+  rw hchar3 at h4,
+  field_simp [hx] at h4,
+  replace h4 := calc E'.a2 = -E'.a1 ^ 2 + (E'.a1 ^ 2 + E'.a2) : by ring
+  ... = -E'.a1 ^ 2 : by { rw h4, ring, },
+  rw [h3, h4] at h1,
+  replace h1 := calc (3 * E'.a1^2 - Q'.x) * Q'.x ^ 2
+  = (E'.a1 * Q'.x) ^ 2 + E'.a1 * Q'.x * (E'.a1 * Q'.x) - Q'.x ^ 3 - -E'.a1 ^ 2 * Q'.x ^ 2 : by ring
+  ... = 0 : h1,
+  rw hchar3 at h1,
+  field_simp [hx] at h1,
+  exact h1,
+end
+
+lemma weierstrass_equation.singular_implies_has_node_or_cusp
+{K : Type*} [field K] (E : weierstrass_equation K) :
+¬ E.non_singular → (¬ E.has_node ↔ E.has_cusp) :=
+begin
+  rw E.singular_iff_has_affine_singular_point,
+  rintros ⟨ P, hP ⟩,
+  have hP' := E.singular_point_is_node_or_cusp P hP,
+  split, {
+    intro h,
+    unfold weierstrass_equation.has_node at h,
+    push_neg at h,
+    replace hP' := hP'.1 (h P),
+    exact ⟨ P, hP' ⟩,
+  },
+  rintros ⟨ P1, h1 ⟩ ⟨ P2, h2 ⟩,
+  have := E.at_most_one_singular_point P1 P h1.1 hP,
+  rw this at h1,
+  have := E.at_most_one_singular_point P2 P h2.1 hP,
+  rw this at h2,
+  finish,
 end
