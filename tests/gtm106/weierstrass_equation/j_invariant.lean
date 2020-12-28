@@ -130,10 +130,3 @@ begin
   },
   exact ⟨ E, hns, hj ⟩,
 end
-
-lemma weierstrass_equation.same_j_implies_isomorphic' {K : Type*} [field K] [hac : is_alg_closed K]
-{E E' : weierstrass_equation K} (h : E.j = E'.j)
-: E.is_isomorphic' E' :=
-begin
-  sorry,
-end

@@ -312,6 +312,60 @@ def weierstrass_equation.is_isomorphic' {K : Type*} [field K]
 (E E' : weierstrass_equation K) := ∃ C : linear_change_of_variable K,
 (C.change_curve E) = E'
 
+lemma weierstrass_equation.is_isomorphic'.id {K : Type*} [field K]
+(E : weierstrass_equation K) : E.is_isomorphic' E :=
+begin
+  use linear_change_of_variable.identity K,
+  exact linear_change_of_variable.change_curve.id E,
+end
+
+def weierstrass_equation.is_isomorphic'.symm {K : Type*} [field K]
+(E E' : weierstrass_equation K) : E.is_isomorphic' E' ↔ E'.is_isomorphic' E :=
+begin
+  have key : ∀ E E' : weierstrass_equation K, E.is_isomorphic' E' → E'.is_isomorphic' E := by {
+    clear E E',
+    rintros E E' ⟨ C, h ⟩,
+    use C.inverse,
+    rw ← h,
+    rw linear_change_of_variable.change_curve.comp,
+    rw linear_change_of_variable.comp_inv,
+    rw linear_change_of_variable.change_curve.id,
+  },
+  split, { exact key E E', },
+  exact key E' E,
+end
+
+def weierstrass_equation.is_isomorphic'.transitive {K : Type*} [field K]
+(E E' E'' : weierstrass_equation K) :
+E.is_isomorphic' E' → (E'.is_isomorphic' E'' ↔ E.is_isomorphic' E'') :=
+begin
+  rintros ⟨ C, h ⟩,
+  split, {
+    rintros ⟨ C', h' ⟩,
+    use C.composite C',
+    rw ← linear_change_of_variable.change_curve.comp,
+    rw [h, h'],
+  },
+  rintros ⟨ C', h' ⟩,
+  use C.inverse.composite C',
+  rw ← linear_change_of_variable.change_curve.comp,
+  rw ← h,
+  rw linear_change_of_variable.change_curve.comp C.inverse C E,
+  rw linear_change_of_variable.comp_inv,
+  rw linear_change_of_variable.change_curve.id,
+  exact h',
+end
+
+def weierstrass_equation.is_isomorphic'.transitive' {K : Type*} [field K]
+(E E' E'' : weierstrass_equation K) :
+E'.is_isomorphic' E'' → (E.is_isomorphic' E' ↔ E.is_isomorphic' E'') :=
+begin
+  rw weierstrass_equation.is_isomorphic'.symm E' E'',
+  rw weierstrass_equation.is_isomorphic'.symm E E',
+  rw weierstrass_equation.is_isomorphic'.symm E E'',
+  exact weierstrass_equation.is_isomorphic'.transitive _ _ _,
+end
+
 lemma weierstrass_equation.isomorphic'_implies_same_j {K : Type*} [field K]
 {E E' : weierstrass_equation K} (h : E.is_isomorphic' E') : E.j = E'.j :=
 begin
