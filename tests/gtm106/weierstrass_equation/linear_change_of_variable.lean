@@ -308,6 +308,17 @@ begin
   ring,
 end
 
+def weierstrass_equation.is_isomorphic' {K : Type*} [field K]
+(E E' : weierstrass_equation K) := ∃ C : linear_change_of_variable K,
+(C.change_curve E) = E'
+
+lemma weierstrass_equation.isomorphic'_implies_same_j {K : Type*} [field K]
+{E E' : weierstrass_equation K} (h : E.is_isomorphic' E') : E.j = E'.j :=
+begin
+  cases h with C h,
+  rw [← h, C.j E],
+end
+
 def linear_change_of_variable.change_affine_point_back {K : Type*} [field K]
 (C : linear_change_of_variable K) (P : affine_plane_point K) : affine_plane_point K :=
 affine_plane_point.mk (C.u^2*P.x + C.r) (C.u^3*P.y + C.u^2*C.s*P.x + C.t)
