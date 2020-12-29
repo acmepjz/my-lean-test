@@ -1,13 +1,13 @@
 import algebra.field
 import algebra.char_zero
 import algebra.char_p
-import field_theory.algebraic_closure
 import tests.gtm106.naive_plane
 import tests.gtm106.weierstrass_equation.basic
 import tests.gtm106.weierstrass_equation.linear_change_of_variable
 import tests.gtm106.weierstrass_equation.models_by_characteristic
 import tests.testchar
 import tests.testperfect
+import tests.testseparableclosed
 import tactic
 
 lemma weierstrass_equation.exists_j {K : Type*} [field K]
@@ -130,22 +130,6 @@ begin
     ring,
   },
   exact ⟨ E, hns, hj ⟩,
-end
-
-lemma alg_closed_implies_pow_surj (K : Type*) [field K] [is_alg_closed K] (n : ℕ) (hn : n ≠ 0)
-: nth_power_surjective K n :=
-begin
-  intro x,
-  let f : polynomial K := polynomial.X^n - (polynomial.C x),
-  have hdeg := calc f.degree = n : polynomial.degree_X_pow_sub_C (nat.pos_of_ne_zero hn) x
-  ... ≠ 0 : by { norm_cast, exact hn, },
-  have hsplit := @polynomial.splits' K K _ _ _ (ring_hom.id K) f,
-  replace hsplit := polynomial.exists_root_of_splits (ring_hom.id K) hsplit hdeg,
-  cases hsplit with y hy,
-  use y,
-  simp at hy,
-  calc y ^ n = x + (y ^ n - x) : by ring
-  ... = x : by { rw hy, ring, },
 end
 
 lemma weierstrass_equation.same_j_implies_isomorphic'_char_2 {K : Type*} [field K] [is_alg_closed K]

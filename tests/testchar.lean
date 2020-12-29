@@ -52,16 +52,19 @@ begin
   field_simp [h],
 end
 
-example (K : Type*) [field K] (h : (2 : K) ≠ 0) (x : K) : (x * 2) / 2 = x :=
-begin
-  field_simp [h],
-end
-
 lemma dvd_char_is_zero
 {K : Type*} [field K] {p : ℕ} (hp : ring_char K = p) (n : ℤ) (hdvd : (p : ℤ) ∣ n) : (n : K) = 0 :=
 begin
   rw ring_char.eq_iff at hp,
   rw @char_p.int_cast_eq_zero_iff K _ p hp n,
+  exact hdvd,
+end
+
+lemma ndvd_char_is_non_zero
+{K : Type*} [field K] {p : ℕ} (hp : ring_char K = p) (n : ℤ) (hdvd : ¬ (p : ℤ) ∣ n) : (n : K) ≠ 0 :=
+begin
+  rw ring_char.eq_iff at hp,
+  rw [ne.def, @char_p.int_cast_eq_zero_iff K _ p hp n],
   exact hdvd,
 end
 
