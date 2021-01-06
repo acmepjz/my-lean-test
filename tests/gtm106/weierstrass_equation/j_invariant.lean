@@ -1,3 +1,4 @@
+import data.nat.prime
 import algebra.field
 import algebra.char_zero
 import algebra.char_p
@@ -132,7 +133,163 @@ begin
   exact ⟨ E, hns, hj ⟩,
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_2 {K : Type*} [field K] [is_alg_closed K]
+lemma weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_non_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+(E1 E1' : weierstrass_equation K)
+(hchar2 : ring_char K = 2)
+: ∃ s : K, s^2 + s + (E1.a2 + E1'.a2) = 0 :=
+begin
+  let f : polynomial K := polynomial.X^2 + polynomial.X + (polynomial.C (E1.a2 + E1'.a2)),
+  have hdeg : f.degree ≠ 0 := by {
+    let f1 : polynomial K := polynomial.X^2,
+    let f2 : polynomial K := polynomial.X,
+    let f3 : polynomial K := polynomial.C (E1.a2 + E1'.a2),
+    have h1 : f1.degree = 2 := polynomial.degree_X_pow _,
+    have h2 : f2.degree ≤ 1 := polynomial.degree_X_le,
+    have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
+    have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
+    ... ≤ max 1 0 : max_le_max h2 h3
+    ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
+    calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw ← add_assoc, }
+    ... ≠ 0 : by {
+      rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
+    },
+  },
+  let f' : polynomial K := 1,
+  have hf' : f' = f.derivative := by {
+    have : f = (polynomial.C (1 : K)) * polynomial.X^2 + (polynomial.C (1 : K)) * polynomial.X^1 + (polynomial.C (E1.a2 + E1'.a2)) := by simp,
+    rw this,
+    repeat { rw polynomial.derivative_add },
+    repeat { rw polynomial.derivative_C_mul_X_pow },
+    rw polynomial.derivative_C,
+    have : ((2 : ℕ) : K) = ((2 : ℤ) : K) := by { norm_cast, },
+    rw this,
+    have h := dvd_char_is_zero hchar2 2 (by norm_num), rw h, clear h,
+    simp,
+  },
+  have hcop : is_coprime f f.derivative := by {
+    rw ← hf',
+    use [-1, f+1],
+    rw [add_mul, mul_one, mul_one, ← add_assoc],
+    ring,
+  },
+  cases hsc f hcop hdeg with s hs,
+  simp at hs,
+  exact ⟨ s, hs ⟩,
+end
+
+lemma weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+(u : K)
+(E1 E1' : weierstrass_equation K)
+(hchar2 : ring_char K = 2)
+(hns : E1.a3 ≠ 0)
+: ∃ s : K, s^4 + E1.a3*s + (E1.a4 - u^4*E1'.a4) = 0 :=
+begin
+  let f : polynomial K := polynomial.X^4 + (polynomial.C E1.a3) * polynomial.X + (polynomial.C (E1.a4 - u^4*E1'.a4)),
+  have hdeg : f.degree ≠ 0 := by {
+    let f1 : polynomial K := polynomial.X^4,
+    set! f2 : polynomial K := (polynomial.C E1.a3) * polynomial.X^1 with hf2, rw pow_one at hf2,
+    let f3 : polynomial K := polynomial.C (E1.a4 - u^4*E1'.a4),
+    have h1 : f1.degree = 4 := polynomial.degree_X_pow _,
+    have h2 : f2.degree ≤ 1 := polynomial.degree_C_mul_X_pow_le _ _,
+    have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
+    have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
+    ... ≤ max 1 0 : max_le_max h2 h3
+    ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
+    calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw [← add_assoc, hf2], }
+    ... ≠ 0 : by {
+      rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
+    },
+  },
+  let f' : polynomial K := polynomial.C E1.a3,
+  have hf' : f' = f.derivative := by {
+    have : f = (polynomial.C (1 : K)) *  polynomial.X^4 + (polynomial.C E1.a3) * polynomial.X^1 + (polynomial.C (E1.a4 - u^4*E1'.a4)) := by simp,
+    rw this,
+    repeat { rw polynomial.derivative_add },
+    repeat { rw polynomial.derivative_C_mul_X_pow },
+    rw polynomial.derivative_C,
+    have : ((4 : ℕ) : K) = ((4 : ℤ) : K) := by { norm_cast, },
+    rw this,
+    have h := dvd_char_is_zero hchar2 4 (by norm_num), rw h, clear h,
+    simp,
+  },
+  have hcop : is_coprime f f.derivative := by {
+    rw ← hf',
+    let a : polynomial K := -f',
+    let b : polynomial K := f + polynomial.C (1/E1.a3),
+    use [a, b],
+    calc a * f + b * f'
+    = (-f') * f + (f + polynomial.C (1/E1.a3)) * f' : rfl
+    ... = polynomial.C (1/E1.a3) * f' : by ring
+    ... = 1 : by {
+      rw ← polynomial.C_mul,
+      field_simp [hns],
+    },
+  },
+  cases hsc f hcop hdeg with s hs,
+  repeat {rw polynomial.eval₂_add at hs},
+  rw [polynomial.eval₂_mul, polynomial.eval₂_X_pow, polynomial.eval₂_X] at hs,
+  repeat {rw polynomial.eval₂_C at hs},
+  simp at hs,
+  exact ⟨ s, hs ⟩,
+end
+
+lemma weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_t_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+(u s : K)
+(E1 E1' : weierstrass_equation K)
+(hchar2 : ring_char K = 2)
+(hns : E1.a3 ≠ 0)
+: ∃ t : K, t^2 + E1.a3*t + (s^6 + E1.a4*s^2 + E1.a6 - u^6*E1'.a6) = 0 :=
+begin
+  let f : polynomial K := polynomial.X^2 + (polynomial.C E1.a3) * polynomial.X + (polynomial.C (s^6 + E1.a4*s^2 + E1.a6 - u^6*E1'.a6)),
+  have hdeg : f.degree ≠ 0 := by {
+    let f1 : polynomial K := polynomial.X^2,
+    set! f2 : polynomial K := (polynomial.C E1.a3) * polynomial.X^1 with hf2, rw pow_one at hf2,
+    let f3 : polynomial K := polynomial.C (s^6 + E1.a4*s^2 + E1.a6 - u^6*E1'.a6),
+    have h1 : f1.degree = 2 := polynomial.degree_X_pow _,
+    have h2 : f2.degree ≤ 1 := polynomial.degree_C_mul_X_pow_le _ _,
+    have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
+    have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
+    ... ≤ max 1 0 : max_le_max h2 h3
+    ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
+    calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw [← add_assoc, hf2], }
+    ... ≠ 0 : by {
+      rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
+    },
+  },
+  let f' : polynomial K := polynomial.C E1.a3,
+  have hf' : f' = f.derivative := by {
+    have : f = (polynomial.C (1 : K)) *  polynomial.X^2 + (polynomial.C E1.a3) * polynomial.X^1 + (polynomial.C (s^6 + E1.a4*s^2 + E1.a6 - u^6*E1'.a6)) := by simp,
+    rw this,
+    repeat { rw polynomial.derivative_add },
+    repeat { rw polynomial.derivative_C_mul_X_pow },
+    rw polynomial.derivative_C,
+    have : ((2 : ℕ) : K) = ((2 : ℤ) : K) := by { norm_cast, },
+    rw this,
+    have h := dvd_char_is_zero hchar2 2 (by norm_num), rw h, clear h,
+    simp,
+  },
+  have hcop : is_coprime f f.derivative := by {
+    rw ← hf',
+    let a : polynomial K := -f',
+    let b : polynomial K := f + polynomial.C (1/E1.a3),
+    use [a, b],
+    calc a * f + b * f'
+    = (-f') * f + (f + polynomial.C (1/E1.a3)) * f' : rfl
+    ... = polynomial.C (1/E1.a3) * f' : by ring
+    ... = 1 : by {
+      rw ← polynomial.C_mul,
+      field_simp [hns],
+    },
+  },
+  cases hsc f hcop hdeg with t ht,
+  repeat {rw polynomial.eval₂_add at ht},
+  rw [polynomial.eval₂_mul, polynomial.eval₂_X_pow, polynomial.eval₂_X] at ht,
+  repeat {rw polynomial.eval₂_C at ht},
+  simp at ht,
+  exact ⟨ t, ht ⟩,
+end
+
+lemma weierstrass_equation.same_j_implies_isomorphic'_char_2 {K : Type*} [field K] (hsc : my_sep_closed K)
 {E E' : weierstrass_equation K} (h : E.j = E'.j) (hns : E.non_singular') (hns' : E'.non_singular')
 (hchar2 : ring_char K = 2)
 : E.is_isomorphic' E' :=
@@ -155,27 +312,7 @@ begin
       rw E1'.j_of_model_of_char_2_j_non_zero hmod' hchar2 at h hj',
       field_simp at hj hj',
       field_simp [hj, hj'] at h,
-      let f : polynomial K := polynomial.X^2 + polynomial.X + (polynomial.C (E1.a2 + E1'.a2)),
-      have hdeg : f.degree ≠ 0 := by {
-        let f1 : polynomial K := polynomial.X^2,
-        let f2 : polynomial K := polynomial.X,
-        let f3 : polynomial K := polynomial.C (E1.a2 + E1'.a2),
-        have h1 : f1.degree = 2 := polynomial.degree_X_pow _,
-        have h2 : f2.degree ≤ 1 := polynomial.degree_X_le,
-        have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
-        have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
-        ... ≤ max 1 0 : max_le_max h2 h3
-        ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
-        calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw ← add_assoc, }
-        ... ≠ 0 : by {
-          rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
-        },
-      },
-      have hsplit := @polynomial.splits' K K _ _ _ (ring_hom.id K) f,
-      replace hsplit := polynomial.exists_root_of_splits (ring_hom.id K) hsplit hdeg,
-      cases hsplit with s hs,
-      simp at hs,
-      clear hdeg f,
+      cases weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_non_zero hsc E1 E1' hchar2 with s hs,
       let C : linear_change_of_variable K := linear_change_of_variable.mk 1 0 s 0 (by simp),
       use C,
       rw weierstrass_equation.ext_iff,
@@ -214,55 +351,9 @@ begin
       rw E1.disc_of_model_of_char_2_j_zero hmod hchar2 at hns,
       rw E1'.disc_of_model_of_char_2_j_zero hmod' hchar2 at hns',
       field_simp at hns hns',
-      cases alg_closed_implies_pow_surj K 3 (by norm_num) (E1.a3 / E1'.a3) with u hu,
-      let f : polynomial K := polynomial.X^4 + (polynomial.C E1.a3) * polynomial.X + (polynomial.C (E1.a4 - u^4*E1'.a4)),
-      have hdeg : f.degree ≠ 0 := by {
-        let f1 : polynomial K := polynomial.X^4,
-        set! f2 : polynomial K := (polynomial.C E1.a3) * polynomial.X^1 with hf2, rw pow_one at hf2,
-        let f3 : polynomial K := polynomial.C (E1.a4 - u^4*E1'.a4),
-        have h1 : f1.degree = 4 := polynomial.degree_X_pow _,
-        have h2 : f2.degree ≤ 1 := polynomial.degree_C_mul_X_pow_le _ _,
-        have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
-        have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
-        ... ≤ max 1 0 : max_le_max h2 h3
-        ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
-        calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw [← add_assoc, hf2], }
-        ... ≠ 0 : by {
-          rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
-        },
-      },
-      have hsplit := @polynomial.splits' K K _ _ _ (ring_hom.id K) f,
-      replace hsplit := polynomial.exists_root_of_splits (ring_hom.id K) hsplit hdeg,
-      cases hsplit with s hs,
-      repeat {rw polynomial.eval₂_add at hs},
-      rw [polynomial.eval₂_mul,polynomial.eval₂_X_pow, polynomial.eval₂_X] at hs,
-      repeat {rw polynomial.eval₂_C at hs},
-      simp at hs,
-      clear hdeg f,
-      let f : polynomial K := polynomial.X^2 + (polynomial.C E1.a3) * polynomial.X + (polynomial.C (s^6 + E1.a4*s^2 + E1.a6 - u^6*E1'.a6)),
-      have hdeg : f.degree ≠ 0 := by {
-        let f1 : polynomial K := polynomial.X^2,
-        set! f2 : polynomial K := (polynomial.C E1.a3) * polynomial.X^1 with hf2, rw pow_one at hf2,
-        let f3 : polynomial K := polynomial.C (s^6 + E1.a4*s^2 + E1.a6 - u^6*E1'.a6),
-        have h1 : f1.degree = 2 := polynomial.degree_X_pow _,
-        have h2 : f2.degree ≤ 1 := polynomial.degree_C_mul_X_pow_le _ _,
-        have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
-        have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
-        ... ≤ max 1 0 : max_le_max h2 h3
-        ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
-        calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw [← add_assoc, hf2], }
-        ... ≠ 0 : by {
-          rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
-        },
-      },
-      have hsplit := @polynomial.splits' K K _ _ _ (ring_hom.id K) f,
-      replace hsplit := polynomial.exists_root_of_splits (ring_hom.id K) hsplit hdeg,
-      cases hsplit with t ht,
-      repeat {rw polynomial.eval₂_add at ht},
-      rw [polynomial.eval₂_mul,polynomial.eval₂_X_pow, polynomial.eval₂_X] at ht,
-      repeat {rw polynomial.eval₂_C at ht},
-      simp at ht,
-      clear hdeg f,
+      cases sep_closed_implies_pow_surj K hsc 3 (by { rw hchar2, norm_num, }) (E1.a3 / E1'.a3) with u hu,
+      cases weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_zero hsc u E1 E1' hchar2 hns with s hs,
+      cases weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_t_for_j_zero hsc u s E1 E1' hchar2 hns with t ht,
       let C := linear_change_of_variable.mk u (s^2) s t (by {
         intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact hns hu.symm,
       }),
@@ -295,11 +386,69 @@ begin
   },
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_3 {K : Type*} [field K] [is_alg_closed K]
+lemma weierstrass_equation.same_j_implies_isomorphic'_char_3.solve_r_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+(u : K)
+(E1 E1' : weierstrass_equation K)
+(hchar3 : ring_char K = 3)
+(hns : E1.a4 ≠ 0)
+: ∃ r : K, r^3 + E1.a4*r + (E1.a6 - u^6*E1'.a6) = 0 :=
+begin
+  let f : polynomial K := polynomial.X^3 + (polynomial.C E1.a4) * polynomial.X + (polynomial.C (E1.a6 - u^6*E1'.a6)),
+  have hdeg : f.degree ≠ 0 := by {
+    let f1 : polynomial K := polynomial.X^3,
+    set! f2 : polynomial K := (polynomial.C E1.a4) * polynomial.X^1 with hf2, rw pow_one at hf2,
+    let f3 : polynomial K := polynomial.C (E1.a6 - u^6*E1'.a6),
+    have h1 : f1.degree = 3 := polynomial.degree_X_pow _,
+    have h2 : f2.degree ≤ 1 := polynomial.degree_C_mul_X_pow_le _ _,
+    have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
+    have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
+    ... ≤ max 1 0 : max_le_max h2 h3
+    ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
+    calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw [← add_assoc, hf2], }
+    ... ≠ 0 : by {
+      rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
+    },
+  },
+  let f' : polynomial K := polynomial.C E1.a4,
+  have hf' : f' = f.derivative := by {
+    have : f = (polynomial.C (1 : K)) * polynomial.X^3 + (polynomial.C E1.a4) * polynomial.X^1 + (polynomial.C (E1.a6 - u^6*E1'.a6)) := by simp,
+    rw this,
+    repeat { rw polynomial.derivative_add },
+    repeat { rw polynomial.derivative_C_mul_X_pow },
+    rw polynomial.derivative_C,
+    have : ((3 : ℕ) : K) = ((3 : ℤ) : K) := by { norm_cast, },
+    rw this,
+    have h := dvd_char_is_zero hchar3 3 (by norm_num), rw h, clear h,
+    simp,
+  },
+  have hcop : is_coprime f f.derivative := by {
+    rw ← hf',
+    let a : polynomial K := -f',
+    let b : polynomial K := f + polynomial.C (1/E1.a4),
+    use [a, b],
+    calc a * f + b * f'
+    = (-f') * f + (f + polynomial.C (1/E1.a4)) * f' : rfl
+    ... = polynomial.C (1/E1.a4) * f' : by ring
+    ... = 1 : by {
+      rw ← polynomial.C_mul,
+      field_simp [hns],
+    },
+  },
+  cases hsc f hcop hdeg with r hr,
+  repeat {rw polynomial.eval₂_add at hr},
+  rw [polynomial.eval₂_mul, polynomial.eval₂_X_pow, polynomial.eval₂_X] at hr,
+  repeat {rw polynomial.eval₂_C at hr},
+  simp at hr,
+  exact ⟨ r, hr ⟩,
+end
+
+lemma weierstrass_equation.same_j_implies_isomorphic'_char_3 {K : Type*} [field K] (hsc : my_sep_closed K)
 {E E' : weierstrass_equation K} (h : E.j = E'.j) (hns : E.non_singular') (hns' : E'.non_singular')
 (hchar3 : ring_char K = 3)
 : E.is_isomorphic' E' :=
 begin
+  have hcharndvd2 : ¬ ring_char K ∣ 2 := by { rw hchar3, norm_num, },
+  have hcharndvd4 : ¬ ring_char K ∣ 4 := by { rw hchar3, norm_num, },
   rcases E.have_model_of_char_3 hchar3 with ⟨ hj, C, hmod ⟩ | ⟨ hj, C, hmod ⟩, {
     replace hj := hj hns,
     rcases E'.have_model_of_char_3 hchar3 with ⟨ hj', C', hmod' ⟩ | ⟨ hj', C', hmod' ⟩, {
@@ -318,7 +467,7 @@ begin
       rw E1'.j_of_model_of_char_3_j_non_zero hmod' hchar3 at h hj',
       field_simp at hj hj',
       push_neg at hj hj',
-      cases alg_closed_implies_pow_surj K 2 (by norm_num) (E1.a2 / E1'.a2) with u hu,
+      cases sep_closed_implies_pow_surj K hsc 2 hcharndvd2 (E1.a2 / E1'.a2) with u hu,
       let C := linear_change_of_variable.mk u 0 0 0 (by {
         intro h, rw h at hu, field_simp [zero_pow, hj'.1] at hu, exact hj.1 hu.symm,
       }),
@@ -364,31 +513,8 @@ begin
       rw E1.disc_of_model_of_char_3_j_zero hmod hchar3 at hns,
       rw E1'.disc_of_model_of_char_3_j_zero hmod' hchar3 at hns',
       field_simp at hns hns',
-      cases alg_closed_implies_pow_surj K 4 (by norm_num) (E1.a4 / E1'.a4) with u hu,
-      let f : polynomial K := polynomial.X^3 + (polynomial.C E1.a4) * polynomial.X + (polynomial.C (E1.a6 - u^6*E1'.a6)),
-      have hdeg : f.degree ≠ 0 := by {
-        let f1 : polynomial K := polynomial.X^3,
-        set! f2 : polynomial K := (polynomial.C E1.a4) * polynomial.X^1 with hf2, rw pow_one at hf2,
-        let f3 : polynomial K := polynomial.C (E1.a6 - u^6*E1'.a6),
-        have h1 : f1.degree = 3 := polynomial.degree_X_pow _,
-        have h2 : f2.degree ≤ 1 := polynomial.degree_C_mul_X_pow_le _ _,
-        have h3 : f3.degree ≤ 0 := polynomial.degree_C_le,
-        have h4 := calc (f2 + f3).degree ≤ max f2.degree f3.degree : polynomial.degree_add_le f2 f3
-        ... ≤ max 1 0 : max_le_max h2 h3
-        ... < f1.degree : by { rw h1, simp, norm_cast, norm_num, },
-        calc f.degree = (f1 + (f2 + f3)).degree : by { congr' 1, rw [← add_assoc, hf2], }
-        ... ≠ 0 : by {
-          rw [polynomial.degree_add_eq_left_of_degree_lt h4, h1], norm_cast, norm_num,
-        },
-      },
-      have hsplit := @polynomial.splits' K K _ _ _ (ring_hom.id K) f,
-      replace hsplit := polynomial.exists_root_of_splits (ring_hom.id K) hsplit hdeg,
-      cases hsplit with r hr,
-      repeat {rw polynomial.eval₂_add at hr},
-      rw [polynomial.eval₂_mul,polynomial.eval₂_X_pow, polynomial.eval₂_X] at hr,
-      repeat {rw polynomial.eval₂_C at hr},
-      simp at hr,
-      clear hdeg f,
+      cases sep_closed_implies_pow_surj K hsc 4 hcharndvd4 (E1.a4 / E1'.a4) with u hu,
+      cases weierstrass_equation.same_j_implies_isomorphic'_char_3.solve_r_for_j_zero hsc u E1 E1' hchar3 hns with r hr,
       let C := linear_change_of_variable.mk u r 0 0 (by {
         intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact hns hu.symm,
       }),
@@ -413,16 +539,41 @@ begin
   },
 end
 
--- TODO: separable closed is enough (GTM106 Exercise A.4)
-lemma weierstrass_equation.same_j_implies_isomorphic' {K : Type*} [field K] [is_alg_closed K]
+lemma weierstrass_equation.same_j_implies_isomorphic' {K : Type*} [field K] (hsc : my_sep_closed K)
 {E E' : weierstrass_equation K} (h : E.j = E'.j) (hns : E.non_singular') (hns' : E'.non_singular')
 : E.is_isomorphic' E' :=
 begin
   by_cases hchar2 : ring_char K = 2, {
-    exact weierstrass_equation.same_j_implies_isomorphic'_char_2 h hns hns' hchar2,
+    exact weierstrass_equation.same_j_implies_isomorphic'_char_2 hsc h hns hns' hchar2,
   },
   by_cases hchar3 : ring_char K = 3, {
-    exact weierstrass_equation.same_j_implies_isomorphic'_char_3 h hns hns' hchar3,
+    exact weierstrass_equation.same_j_implies_isomorphic'_char_3 hsc h hns hns' hchar3,
+  },
+  have hcharndvd2 : ¬ ring_char K ∣ 2 := by {
+    cases char_is_prime_or_zero' K with hh hh, {
+      rw nat.prime_dvd_prime_iff_eq hh nat.prime_two, exact hchar2,
+    },
+    rw hh, norm_num,
+  },
+  have hcharndvd3 : ¬ ring_char K ∣ 3 := by {
+    cases char_is_prime_or_zero' K with hh hh, {
+      rw nat.prime_dvd_prime_iff_eq hh nat.prime_three, exact hchar3,
+    },
+    rw hh, norm_num,
+  },
+  have hcharndvd4 : ¬ ring_char K ∣ 4 := by {
+    cases char_is_prime_or_zero' K with hh hh, {
+      rw (calc 4 = 2*2 : by norm_num),
+      exact nat.prime.not_dvd_mul hh hcharndvd2 hcharndvd2,
+    },
+    rw hh, norm_num,
+  },
+  have hcharndvd6 : ¬ ring_char K ∣ 6 := by {
+    cases char_is_prime_or_zero' K with hh hh, {
+      rw (calc 6 = 2*3 : by norm_num),
+      exact nat.prime.not_dvd_mul hh hcharndvd2 hcharndvd3,
+    },
+    rw hh, norm_num,
   },
   rcases E.have_model_of_char_neq_2_and_3 hchar2 hchar3 with ⟨ C, hmod ⟩,
   rcases E'.have_model_of_char_neq_2_and_3 hchar2 hchar3 with ⟨ C', hmod' ⟩,
@@ -457,7 +608,7 @@ begin
     field_simp [zero_pow, hns] at h,
     rw h at hns',
     field_simp [zero_pow, h16, h27] at hns',
-    cases alg_closed_implies_pow_surj K 6 (by norm_num) (E1.a6/E1'.a6) with u hu,
+    cases sep_closed_implies_pow_surj K hsc 6 hcharndvd6 (E1.a6/E1'.a6) with u hu,
     let C := linear_change_of_variable.mk u 0 0 0 (by {
       intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact hns hu.symm,
     }),
@@ -481,7 +632,7 @@ begin
     field_simp [zero_pow, ha4] at h,
     rw h at hns',
     field_simp [zero_pow, h4, h16] at hns',
-    cases alg_closed_implies_pow_surj K 4 (by norm_num) (E1.a4/E1'.a4) with u hu,
+    cases sep_closed_implies_pow_surj K hsc 4 hcharndvd4 (E1.a4/E1'.a4) with u hu,
     let C := linear_change_of_variable.mk u 0 0 0 (by {
       intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact ha4 hu.symm,
     }),
@@ -514,7 +665,7 @@ begin
     field_simp [zero_pow, ha4', ha6] at h,
     exact h,
   },
-  cases alg_closed_implies_pow_surj K 2 (by norm_num) ((E1.a6 / E1'.a6) / (E1.a4 / E1'.a4)) with u hu,
+  cases sep_closed_implies_pow_surj K hsc 2 hcharndvd2 ((E1.a6 / E1'.a6) / (E1.a4 / E1'.a4)) with u hu,
   have hu4 := calc u ^ 4 = (u ^ 2) ^ 2 : by ring
   ... = E1.a4 / E1'.a4 : by {
     rw hu,

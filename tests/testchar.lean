@@ -6,7 +6,7 @@ import algebra.char_zero
 import algebra.char_p
 import tactic
 
-example (K : Type*) [field K] : nat.prime (ring_char K) ∨ ring_char K = 0 :=
+lemma char_is_prime_or_zero' (K : Type*) [field K] : nat.prime (ring_char K) ∨ ring_char K = 0 :=
 begin
   let p := ring_char K,
   have h : ring_char K = p := rfl,
