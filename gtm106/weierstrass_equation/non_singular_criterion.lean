@@ -1,12 +1,12 @@
 import algebra.field
 import algebra.char_zero
 import algebra.char_p
-import tests.gtm106.naive_plane
-import tests.gtm106.weierstrass_equation.basic
-import tests.gtm106.weierstrass_equation.linear_change_of_variable
-import tests.gtm106.weierstrass_equation.models_by_characteristic
-import tests.testchar
-import tests.testperfect
+import gtm106.naive_plane
+import gtm106.weierstrass_equation.basic
+import gtm106.weierstrass_equation.linear_change_of_variable
+import gtm106.weierstrass_equation.models_by_characteristic
+import myhelper.test_char
+import myhelper.test_perfect
 import tactic
 
 noncomputable theory

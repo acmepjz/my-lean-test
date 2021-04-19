@@ -5,7 +5,7 @@ import algebra.field
 import algebra.char_zero
 import algebra.char_p
 import field_theory.perfect_closure
-import tests.testchar
+import myhelper.char
 import tactic
 
 noncomputable theory

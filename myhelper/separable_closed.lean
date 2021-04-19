@@ -7,8 +7,8 @@ import algebra.char_p
 import field_theory.separable
 import field_theory.algebraic_closure
 import field_theory.perfect_closure
-import tests.testchar
-import tests.testperfect
+import myhelper.char
+import myhelper.perfect
 import tactic
 
 noncomputable theory

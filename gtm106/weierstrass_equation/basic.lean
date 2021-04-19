@@ -1,5 +1,5 @@
 import algebra.field
-import tests.gtm106.naive_plane
+import gtm106.naive_plane
 import tactic
 
 noncomputable theory

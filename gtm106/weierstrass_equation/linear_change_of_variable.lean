@@ -1,6 +1,6 @@
 import algebra.field
-import tests.gtm106.naive_plane
-import tests.gtm106.weierstrass_equation.basic
+import gtm106.naive_plane
+import gtm106.weierstrass_equation.basic
 import tactic
 
 noncomputable theory
