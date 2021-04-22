@@ -33,9 +33,8 @@ begin
   intro h0,
   replace h0 := ring_char.dvd h0,
   cases (nat.dvd_prime hq).1 h0 with hp' hp', {
-    have : (1:R) ≠ 0 := one_ne_zero,
-    have := (ring_char.spec R 1).2 (by { rw hp', }),
-    norm_cast at this,
+    apply (show (1:R) ≠ 0, from one_ne_zero),
+    exact_mod_cast (ring_char.spec R 1).2 (by { rw hp', }),
   },
   exact hneq hp',
 end
@@ -101,11 +100,8 @@ begin
   replace hdvd : (b:ℤ) = a + p * c := by { rw ← hdvd, ring, },
   norm_cast at hdvd,
   rw hdvd,
-  transitivity (a:R) + p * c, {
-    rw (@char_p.cast_eq_zero_iff R _ p hp p).2 (dvd_refl p),
-    simp,
-  },
-  simp,
+  push_cast,
+  simp [(@char_p.cast_eq_zero_iff R _ p hp p).2 (dvd_refl p)],
 end
 
 lemma cong_char_is_eq_N
@@ -182,7 +178,7 @@ section char_specific
   meta def tactic.interactive.ring_char2 : tactic unit :=
   do
     hchar ← get_local `hchar2,
-    `(ring_char _ = 2) ← infer_type hchar,
+    `(ring_char _ = 2) ← infer_type hchar | tactic.fail "hchar2 : ring_char R = 2 is expected",
     `[ repeat {
       simp [char_two_bit0 hchar2, char_two_bit1 hchar2,
       pow_zero, pow_one, zero_mul, mul_zero] <|> ring_nf }
@@ -193,21 +189,15 @@ section char_specific
   end
 
   lemma char_three_3_eq_0 (hchar : ring_char R = 3) : (3:R) = 0 := begin
-    have := dvd_char_is_zero_N hchar 3 (by norm_num),
-    norm_cast at this,
-    exact this,
+    exact_mod_cast dvd_char_is_zero_N hchar 3 (by norm_num),
   end
 
   lemma char_three_4_eq_1 (hchar : ring_char R = 3) : (4:R) = 1 := begin
-    have := cong_char_is_eq_N hchar 4 1 (by norm_num),
-    norm_cast at this,
-    exact this,
+    exact_mod_cast cong_char_is_eq_N hchar 4 1 (by norm_num),
   end
 
   lemma char_three_5_eq_2 (hchar : ring_char R = 3) : (5:R) = 2 := begin
-    have := cong_char_is_eq_N hchar 5 2 (by norm_num),
-    norm_cast at this,
-    exact this,
+    exact_mod_cast cong_char_is_eq_N hchar 5 2 (by norm_num),
   end
 
   example (hchar : ring_char R = 3) : (34 : R) = 37 := begin
@@ -221,7 +211,7 @@ section char_specific
   meta def tactic.interactive.ring_char3 : tactic unit :=
   do
     hchar ← get_local `hchar3,
-    `(ring_char _ = 3) ← infer_type hchar,
+    `(ring_char _ = 3) ← infer_type hchar | tactic.fail "hchar3 : ring_char R = 3 is expected",
     `[ repeat {
       simp [char_three_3_eq_0 hchar3, char_three_4_eq_1 hchar3, char_three_5_eq_2 hchar3,
       pow_zero, pow_one, zero_mul, mul_zero] <|> ring_nf }

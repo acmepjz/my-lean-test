@@ -49,9 +49,7 @@ begin
   by_cases hchar2 : ring_char K = 2, {
     replace hperfect : nth_power_surjective K 2 := by {
       have h := hperfect hchar2,
-      unfold my_perfect_field at h,
-      rw hchar2 at h,
-      cases h with h h, { contradiction, },
+      simp [my_perfect_field, hchar2] at h,
       exact h,
     },
     have h := dvd_char_is_zero hchar2 4 (by norm_num), norm_cast at h, rw h at hdisc, clear h,
