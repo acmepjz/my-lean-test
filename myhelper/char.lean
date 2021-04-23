@@ -140,9 +140,8 @@ begin
 end
 
 section char_specific
-  variables {R : Type*} [semiring R]
 
-  lemma char_two_bit0 (hchar : ring_char R = 2) (x : R) : bit0 x = 0 := begin
+  lemma char_two_bit0 {R : Type*} [semiring R] (hchar : ring_char R = 2) (x : R) : bit0 x = 0 := begin
     unfold bit0,
     transitivity (2:R) * x,
     { rw [bit0, add_mul, one_mul], },
@@ -152,12 +151,12 @@ section char_specific
     rw [this, zero_mul],
   end
 
-  lemma char_two_bit1 (hchar : ring_char R = 2) (x : R) : bit1 x = 1 := begin
+  lemma char_two_bit1 {R : Type*} [semiring R] (hchar : ring_char R = 2) (x : R) : bit1 x = 1 := begin
     unfold bit1,
     rw [char_two_bit0 hchar, zero_add],
   end
 
-  example (hchar : ring_char R = 2) : (35 : R) = 37 := begin
+  example {R : Type*} [semiring R] (hchar : ring_char R = 2) : (35 : R) = 37 := begin
     simp [char_two_bit0 hchar, char_two_bit1 hchar],
   end
 
@@ -175,32 +174,49 @@ section char_specific
   Experimental ring tactic for characteristic 2.
   FIXME: You must provide a `hchar2 : ring_char R = 2` hypothesis.
   -/
-  meta def tactic.interactive.ring_char2 : tactic unit :=
+  meta def tactic.interactive.ring_char2 (loc : parse location) : tactic unit :=
   do
     hchar ← get_local `hchar2,
     `(ring_char _ = 2) ← infer_type hchar | tactic.fail "hchar2 : ring_char R = 2 is expected",
-    `[ repeat {
-      simp [char_two_bit0 hchar2, char_two_bit1 hchar2,
-      pow_zero, pow_one, zero_mul, mul_zero] <|> ring_nf }
-    ]
+    (s, u) ← tactic.mk_simp_set ff [] [], -- this includes all default simp lemmas into it
+    char_two_bit0 ← tactic.to_expr ``(char_two_bit0 %%hchar),
+    s ← s.add char_two_bit0,
+    char_two_bit1 ← tactic.to_expr ``(char_two_bit1 %%hchar),
+    s ← s.add char_two_bit1,
+    s ← s.add_simp ``pow_zero,
+    s ← s.add_simp ``pow_one,
+    s ← s.add_simp ``zero_mul,
+    s ← s.add_simp ``mul_zero,
+    ns ← loc.get_locals,
+    -- FIXME: add a maximal repeat time since sometimes simp will change the goal randomly
+    tactic.repeat (do
+      ret1 ← tactic.replace_at (
+        λ e, do (a1, a2, a3) ← tactic.simplify s u e, return (a1, a2)
+      ) ns loc.include_goal,
+      ret2 ← tactic.replace_at (
+        tactic.ring.normalize tactic.transparency.reducible
+      ) ns loc.include_goal,
+      if ret1 || ret2 then tactic.skip else tactic.failed
+    ),
+    when loc.include_goal $ tactic.try (tactic.triv <|> tactic.reflexivity <|> tactic.contradiction)
 
-  example (hchar2 : ring_char R = 2) : (35 : R) = 37 := begin
+  example {R : Type*} [semiring R] (hchar2 : ring_char R = 2) : (35 : R) = 37 := begin
     ring_char2,
   end
 
-  lemma char_three_3_eq_0 (hchar : ring_char R = 3) : (3:R) = 0 := begin
+  lemma char_three_3_eq_0 {R : Type*} [semiring R] (hchar : ring_char R = 3) : (3:R) = 0 := begin
     exact_mod_cast dvd_char_is_zero_N hchar 3 (by norm_num),
   end
 
-  lemma char_three_4_eq_1 (hchar : ring_char R = 3) : (4:R) = 1 := begin
+  lemma char_three_4_eq_1 {R : Type*} [semiring R] (hchar : ring_char R = 3) : (4:R) = 1 := begin
     exact_mod_cast cong_char_is_eq_N hchar 4 1 (by norm_num),
   end
 
-  lemma char_three_5_eq_2 (hchar : ring_char R = 3) : (5:R) = 2 := begin
+  lemma char_three_5_eq_2 {R : Type*} [semiring R] (hchar : ring_char R = 3) : (5:R) = 2 := begin
     exact_mod_cast cong_char_is_eq_N hchar 5 2 (by norm_num),
   end
 
-  example (hchar : ring_char R = 3) : (34 : R) = 37 := begin
+  example {R : Type*} [semiring R] (hchar : ring_char R = 3) : (34 : R) = 37 := begin
     simp [char_three_3_eq_0 hchar, char_three_4_eq_1 hchar, char_three_5_eq_2 hchar],
   end
 
@@ -208,16 +224,35 @@ section char_specific
   Experimental ring tactic for characteristic 3.
   FIXME: You must provide a `hchar3 : ring_char R = 3` hypothesis.
   -/
-  meta def tactic.interactive.ring_char3 : tactic unit :=
+  meta def tactic.interactive.ring_char3 (loc : parse location) : tactic unit :=
   do
     hchar ← get_local `hchar3,
     `(ring_char _ = 3) ← infer_type hchar | tactic.fail "hchar3 : ring_char R = 3 is expected",
-    `[ repeat {
-      simp [char_three_3_eq_0 hchar3, char_three_4_eq_1 hchar3, char_three_5_eq_2 hchar3,
-      pow_zero, pow_one, zero_mul, mul_zero] <|> ring_nf }
-    ]
+    (s, u) ← tactic.mk_simp_set ff [] [], -- this includes all default simp lemmas into it
+    char_three_3_eq_0 ← tactic.to_expr ``(char_three_3_eq_0 %%hchar),
+    s ← s.add char_three_3_eq_0,
+    char_three_4_eq_1 ← tactic.to_expr ``(char_three_4_eq_1 %%hchar),
+    s ← s.add char_three_4_eq_1,
+    char_three_5_eq_2 ← tactic.to_expr ``(char_three_5_eq_2 %%hchar),
+    s ← s.add char_three_5_eq_2,
+    s ← s.add_simp ``pow_zero,
+    s ← s.add_simp ``pow_one,
+    s ← s.add_simp ``zero_mul,
+    s ← s.add_simp ``mul_zero,
+    ns ← loc.get_locals,
+    -- FIXME: add a maximal repeat time since sometimes simp will change the goal randomly
+    tactic.repeat (do
+      ret1 ← tactic.replace_at (
+        λ e, do (a1, a2, a3) ← tactic.simplify s u e, return (a1, a2)
+      ) ns loc.include_goal,
+      ret2 ← tactic.replace_at (
+        tactic.ring.normalize tactic.transparency.reducible
+      ) ns loc.include_goal,
+      if ret1 || ret2 then tactic.skip else tactic.failed
+    ),
+    when loc.include_goal $ tactic.try (tactic.triv <|> tactic.reflexivity <|> tactic.contradiction)
 
-  example (hchar3 : ring_char R = 3) : (34 : R) = 37 := begin
+  example {R : Type*} [semiring R] (hchar3 : ring_char R = 3) : (34 : R) = 37 := begin
     ring_char3,
   end
 
