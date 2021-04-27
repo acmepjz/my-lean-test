@@ -210,6 +210,18 @@ section char_specific
     ring_char2,
   end
 
+  example {R : Type*} [semiring R] (hchar2 : ring_char R = 2) (x : R) (h : (35 : R) * x = 37) : x = 39 := begin
+    ring_char2 at h ⊢,
+    exact h,
+  end
+
+  /-lemma char_three_2_is_invertible {R : Type*} [semiring R] (hchar : ring_char R = 3) : is_unit (2:R) := begin
+    use [(2:R),(2:R)],
+    { norm_num, exact_mod_cast cong_char_is_eq_N hchar 4 1 (by norm_num), },
+    { norm_num, exact_mod_cast cong_char_is_eq_N hchar 4 1 (by norm_num), },
+    fconstructor,
+  end-/
+
   lemma char_three_3_eq_0 {R : Type*} [semiring R] (hchar : ring_char R = 3) : (3:R) = 0 := begin
     exact_mod_cast dvd_char_is_zero_N hchar 3 (by norm_num),
   end
@@ -235,6 +247,7 @@ section char_specific
     hchar ← get_local `hchar3,
     `(ring_char _ = 3) ← infer_type hchar | tactic.fail "hchar3 : ring_char R = 3 is expected",
     (s, u) ← tactic.mk_simp_set ff [] [], -- FIXME: this includes all default simp lemmas into it
+    -- s ← tactic.to_expr ``(char_three_2_is_invertible %%hchar) >>= s.add,
     s ← tactic.to_expr ``(char_three_3_eq_0 %%hchar) >>= s.add,
     s ← tactic.to_expr ``(char_three_4_eq_1 %%hchar) >>= s.add,
     s ← tactic.to_expr ``(char_three_5_eq_2 %%hchar) >>= s.add,
@@ -243,6 +256,10 @@ section char_specific
   example {R : Type*} [semiring R] (hchar3 : ring_char R = 3) : (34 : R) = 37 := begin
     ring_char3,
   end
+
+  /-example {R : Type*} [semiring R] (hchar3 : ring_char R = 3) (x : R) (h : (35 : R) * x = 0) : x = 0 := begin
+    ring_char3 at h,
+  end-/
 
   lemma char_p_a_plus_p_eq_a {R : Type*} [semiring R] {p : ℕ} (hchar : ring_char R = p)
   (a : ℕ) : ((a+p) : R) = a :=
