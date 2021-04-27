@@ -166,6 +166,29 @@ section char_specific
   open interactive (loc.ns)
   open interactive.types (texpr location)
 
+  meta def repeat_at_most : ℕ → tactic unit → tactic unit
+  | 0 t := tactic.skip
+  | (n+1) t := (do t, repeat_at_most n t) <|> tactic.skip
+
+  meta def ring_char_tactic_internal (s : simp_lemmas) (u : list name) (loc : parse location) : tactic unit :=
+  do
+    s ← s.add_simp ``pow_zero,
+    s ← s.add_simp ``pow_one,
+    s ← s.add_simp ``zero_mul,
+    s ← s.add_simp ``mul_zero,
+    ns ← loc.get_locals,
+    -- FIXME: add a maximal repeat time since sometimes simp will change the goal randomly
+    repeat_at_most 4 (do
+      ret1 ← tactic.replace_at (
+        λ e, do (a1, a2, _) ← tactic.simplify s u e, return (a1, a2)
+      ) ns loc.include_goal,
+      ret2 ← tactic.replace_at (
+        tactic.ring.normalize tactic.transparency.reducible
+      ) ns loc.include_goal,
+      if ret1 || ret2 then tactic.skip else tactic.failed
+    ),
+    when loc.include_goal $ tactic.try (tactic.triv <|> tactic.reflexivity <|> tactic.contradiction)
+
   -- (hchar_ : parse texpr)
   -- hchar ← tactic.i_to_expr hchar_,
   -- `(ring_char _ = 2) ← infer_type hchar,
@@ -178,27 +201,10 @@ section char_specific
   do
     hchar ← get_local `hchar2,
     `(ring_char _ = 2) ← infer_type hchar | tactic.fail "hchar2 : ring_char R = 2 is expected",
-    (s, u) ← tactic.mk_simp_set ff [] [], -- this includes all default simp lemmas into it
-    char_two_bit0 ← tactic.to_expr ``(char_two_bit0 %%hchar),
-    s ← s.add char_two_bit0,
-    char_two_bit1 ← tactic.to_expr ``(char_two_bit1 %%hchar),
-    s ← s.add char_two_bit1,
-    s ← s.add_simp ``pow_zero,
-    s ← s.add_simp ``pow_one,
-    s ← s.add_simp ``zero_mul,
-    s ← s.add_simp ``mul_zero,
-    ns ← loc.get_locals,
-    -- FIXME: add a maximal repeat time since sometimes simp will change the goal randomly
-    tactic.repeat (do
-      ret1 ← tactic.replace_at (
-        λ e, do (a1, a2, a3) ← tactic.simplify s u e, return (a1, a2)
-      ) ns loc.include_goal,
-      ret2 ← tactic.replace_at (
-        tactic.ring.normalize tactic.transparency.reducible
-      ) ns loc.include_goal,
-      if ret1 || ret2 then tactic.skip else tactic.failed
-    ),
-    when loc.include_goal $ tactic.try (tactic.triv <|> tactic.reflexivity <|> tactic.contradiction)
+    (s, u) ← tactic.mk_simp_set ff [] [], -- FIXME: this includes all default simp lemmas into it
+    s ← tactic.to_expr ``(char_two_bit0 %%hchar) >>= s.add,
+    s ← tactic.to_expr ``(char_two_bit1 %%hchar) >>= s.add,
+    ring_char_tactic_internal s u loc
 
   example {R : Type*} [semiring R] (hchar2 : ring_char R = 2) : (35 : R) = 37 := begin
     ring_char2,
@@ -228,32 +234,47 @@ section char_specific
   do
     hchar ← get_local `hchar3,
     `(ring_char _ = 3) ← infer_type hchar | tactic.fail "hchar3 : ring_char R = 3 is expected",
-    (s, u) ← tactic.mk_simp_set ff [] [], -- this includes all default simp lemmas into it
-    char_three_3_eq_0 ← tactic.to_expr ``(char_three_3_eq_0 %%hchar),
-    s ← s.add char_three_3_eq_0,
-    char_three_4_eq_1 ← tactic.to_expr ``(char_three_4_eq_1 %%hchar),
-    s ← s.add char_three_4_eq_1,
-    char_three_5_eq_2 ← tactic.to_expr ``(char_three_5_eq_2 %%hchar),
-    s ← s.add char_three_5_eq_2,
-    s ← s.add_simp ``pow_zero,
-    s ← s.add_simp ``pow_one,
-    s ← s.add_simp ``zero_mul,
-    s ← s.add_simp ``mul_zero,
-    ns ← loc.get_locals,
-    -- FIXME: add a maximal repeat time since sometimes simp will change the goal randomly
-    tactic.repeat (do
-      ret1 ← tactic.replace_at (
-        λ e, do (a1, a2, a3) ← tactic.simplify s u e, return (a1, a2)
-      ) ns loc.include_goal,
-      ret2 ← tactic.replace_at (
-        tactic.ring.normalize tactic.transparency.reducible
-      ) ns loc.include_goal,
-      if ret1 || ret2 then tactic.skip else tactic.failed
-    ),
-    when loc.include_goal $ tactic.try (tactic.triv <|> tactic.reflexivity <|> tactic.contradiction)
+    (s, u) ← tactic.mk_simp_set ff [] [], -- FIXME: this includes all default simp lemmas into it
+    s ← tactic.to_expr ``(char_three_3_eq_0 %%hchar) >>= s.add,
+    s ← tactic.to_expr ``(char_three_4_eq_1 %%hchar) >>= s.add,
+    s ← tactic.to_expr ``(char_three_5_eq_2 %%hchar) >>= s.add,
+    ring_char_tactic_internal s u loc
 
   example {R : Type*} [semiring R] (hchar3 : ring_char R = 3) : (34 : R) = 37 := begin
     ring_char3,
+  end
+
+  lemma char_p_a_plus_p_eq_a {R : Type*} [semiring R] {p : ℕ} (hchar : ring_char R = p)
+  (a : ℕ) : ((a+p) : R) = a :=
+  begin
+    exact_mod_cast (cong_char_is_eq_N hchar a (a+p) (by simp)).symm,
+  end
+
+  meta def repeat_n_times {T : Type*} : ℕ → (ℕ → T → tactic T) → T → tactic T
+  | 0 func t := (do return t)
+  | (n+1) func t := (do func n t >>= repeat_n_times n func)
+
+  /--
+  Experimental ring tactic for characteristic p for p an integer literal.
+  FIXME: You must provide a `hchar : ring_char R = p` hypothesis.
+  -/
+  meta def tactic.interactive.ring_charp (loc : parse location) : tactic unit :=
+  do
+    hchar ← get_local `hchar,
+    `(ring_char _ = %%pp) ← infer_type hchar | tactic.fail "hchar : ring_char R = p is expected",
+    p ← pp.to_nat <|> tactic.fail "p must be an integer literal",
+    step ← norm_num.get_step,
+    (s, u) ← tactic.mk_simp_set ff [] [], -- FIXME: this includes all default simp lemmas into it
+    s ← repeat_n_times p (λ n (ss : simp_lemmas), do
+      char_p_a_plus_p_eq_a ← tactic.to_expr ``(char_p_a_plus_p_eq_a %%hchar %%n),
+      (_, a2) ← infer_type char_p_a_plus_p_eq_a >>= norm_num.derive' step,
+      ss ← tactic.mk_eq_mp a2 char_p_a_plus_p_eq_a >>= ss.add,
+      return ss
+    ) s,
+    ring_char_tactic_internal s u loc
+
+  example {R : Type*} [semiring R] (hchar : ring_char R = 5) : (123567 : R) = 51832 := begin
+    ring_charp,
   end
 
 end char_specific
