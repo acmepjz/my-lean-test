@@ -1,0 +1,1 @@
+import gtm106.weierstrass_equation

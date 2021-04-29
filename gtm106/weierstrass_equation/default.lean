@@ -1,0 +1,2 @@
+import gtm106.weierstrass_equation.basic
+import gtm106.weierstrass_equation.point
