@@ -1,7 +1,4 @@
 import algebra.field
-import data.nat.basic
-import data.int.basic
-import data.rat.basic
 import tactic
 
 noncomputable theory
@@ -184,7 +181,7 @@ quotient.lift (@projective_plane_point'.to_affine_plane K h)
 (@projective_plane_point'.to_affine_plane.sound K h) P
 
 lemma affine_plane_point.embed_invertible {K : Type*} [field K]
-(P : affine_plane_point K) : P = P.to_projective_plane.to_affine_plane :=
+(P : affine_plane_point K) : P.to_projective_plane.to_affine_plane = P :=
 begin
   unfold projective_plane_point.to_affine_plane
   affine_plane_point.to_projective_plane
@@ -193,7 +190,7 @@ begin
 end
 
 lemma projective_plane_point.embed_invertible {K : Type*} [field K]
-(P : projective_plane_point K) (h : P.is_finite) : P = P.to_affine_plane.to_projective_plane :=
+(P : projective_plane_point K) (h : P.is_finite) : P.to_affine_plane.to_projective_plane = P :=
 begin
   revert h P,
   refine quotient.ind _,
@@ -202,9 +199,8 @@ begin
   refine quotient.sound _,
   simp [affine_plane_point.to_projective_plane',
     projective_plane_point.to_affine_plane, projective_plane_point'.to_affine_plane],
-  use 1/P.Z,
-  split, { simp [h], },
-  split, { field_simp, },
-  split, { field_simp, },
-  field_simp [h],
+  use [P.Z, h],
+  split, { field_simp [mul_comm], },
+  split, { field_simp [mul_comm], },
+  simp,
 end
