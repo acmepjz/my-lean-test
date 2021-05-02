@@ -30,6 +30,7 @@ def projective_plane_point'.is_equal {K : Type*} [field K]
 (P P' : projective_plane_point' K) :=
 ∃ a : K, a ≠ 0 ∧ P'.X = a * P.X ∧ P'.Y = a * P.Y ∧ P'.Z = a * P.Z
 
+@[simp]
 lemma projective_plane_point'.is_equal.refl {K : Type*} [field K]
 (P : projective_plane_point' K) : P.is_equal P :=
 begin
@@ -37,6 +38,7 @@ begin
   simp,
 end
 
+@[simp]
 lemma projective_plane_point'.is_equal.symm {K : Type*} [field K]
 (P P' : projective_plane_point' K) (h : P.is_equal P') : P'.is_equal P :=
 begin
@@ -45,6 +47,7 @@ begin
   simp [h2, h3, h4, h1],
 end
 
+@[simp]
 lemma projective_plane_point'.is_equal.trans {K : Type*} [field K]
 (P P' P'' : projective_plane_point' K) (h : P.is_equal P') (h' : P'.is_equal P'') : P.is_equal P'' :=
 begin
@@ -180,6 +183,7 @@ def projective_plane_point.to_affine_plane {K : Type*} [h : field K]
 quotient.lift (@projective_plane_point'.to_affine_plane K h)
 (@projective_plane_point'.to_affine_plane.sound K h) P
 
+@[simp]
 lemma affine_plane_point.embed_invertible {K : Type*} [field K]
 (P : affine_plane_point K) : P.to_projective_plane.to_affine_plane = P :=
 begin
@@ -189,6 +193,7 @@ begin
   simp [projective_plane_point'.to_affine_plane, affine_plane_point.ext_iff],
 end
 
+@[simp]
 lemma projective_plane_point.embed_invertible {K : Type*} [field K]
 (P : projective_plane_point K) (h : P.is_finite) : P.to_affine_plane.to_projective_plane = P :=
 begin

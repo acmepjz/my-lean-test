@@ -1,2 +1,4 @@
 import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.point
+import gtm106.weierstrass_equation.linear_change_of_variable
+import gtm106.weierstrass_equation.models_by_characteristic
