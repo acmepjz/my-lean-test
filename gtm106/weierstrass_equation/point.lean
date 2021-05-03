@@ -12,13 +12,40 @@ def eval_at_affine_point
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
 P.y^2 + E.a1*P.x*P.y + E.a3*P.y - P.x^3 - E.a2*P.x^2 - E.a4*P.x - E.a6
 
+@[simp]
+lemma eval_at_affine_point.base_change
+{K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [comm_ring L] (f : ring_hom K L)
+: (E.base_change f).eval_at_affine_point (P.base_change f) = f (E.eval_at_affine_point P) :=
+begin
+  simp [base_change, affine_plane_point.base_change, eval_at_affine_point],
+end
+
 def eval_dx_at_affine_point
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
 E.a1*P.y - 3*P.x^2 - 2*E.a2*P.x - E.a4
 
+@[simp]
+lemma eval_dx_at_affine_point.base_change
+{K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [comm_ring L] (f : ring_hom K L)
+: (E.base_change f).eval_dx_at_affine_point (P.base_change f) = f (E.eval_dx_at_affine_point P) :=
+begin
+  simp [base_change, affine_plane_point.base_change, eval_dx_at_affine_point],
+end
+
 def eval_dy_at_affine_point
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) : K :=
 2*P.y + E.a1*P.x + E.a3
+
+@[simp]
+lemma eval_dy_at_affine_point.base_change
+{K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [comm_ring L] (f : ring_hom K L)
+: (E.base_change f).eval_dy_at_affine_point (P.base_change f) = f (E.eval_dy_at_affine_point P) :=
+begin
+  simp [base_change, affine_plane_point.base_change, eval_dy_at_affine_point],
+end
 
 /--
 `Prop` which asserts that an affine point is on curve
@@ -27,6 +54,24 @@ def affine_point_on_curve
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
 E.eval_at_affine_point P = 0
 
+lemma affine_point_on_curve.base_change
+{K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [comm_ring L] (f : ring_hom K L)
+(h : E.affine_point_on_curve P) : (E.base_change f).affine_point_on_curve (P.base_change f) :=
+begin
+  simp [affine_point_on_curve] at h ⊢,
+  simp [h],
+end
+
+@[simp]
+lemma affine_point_on_curve.base_change_field
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).affine_point_on_curve (P.base_change f) ↔ E.affine_point_on_curve P :=
+begin
+  simp [affine_point_on_curve],
+end
+
 /--
 `Prop` which asserts that an affine point is on curve, and which is regular
 -/
@@ -34,12 +79,30 @@ def affine_point_regular
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
 E.affine_point_on_curve P ∧ ¬ (E.eval_dx_at_affine_point P = 0 ∧ E.eval_dy_at_affine_point P = 0)
 
+@[simp]
+lemma affine_point_regular.base_change_field
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).affine_point_regular (P.base_change f) ↔ E.affine_point_regular P :=
+begin
+  simp [affine_point_regular],
+end
+
 /--
 `Prop` which asserts that an affine point is on curve, and which is singular
 -/
 def affine_point_singular
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) :=
 E.affine_point_on_curve P ∧ E.eval_dx_at_affine_point P = 0 ∧ E.eval_dy_at_affine_point P = 0
+
+@[simp]
+lemma affine_point_singular.base_change_field
+{K : Type*} [field K] (E : weierstrass_equation K) (P : affine_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).affine_point_singular (P.base_change f) ↔ E.affine_point_singular P :=
+begin
+  simp [affine_point_singular],
+end
 
 lemma affine_point_is_regular_or_singular
 {K : Type*} [comm_ring K] (E : weierstrass_equation K) (P : affine_plane_point K) :
@@ -64,6 +127,14 @@ inductive affine_point
 | infinite : affine_point
 | finite (P : affine_plane_point K) (h : E.affine_point_on_curve P) : affine_point
 
+def affine_point.base_change
+{K : Type*} [comm_ring K] {E : weierstrass_equation K}
+{L : Type*} [comm_ring L] (f : ring_hom K L)
+: affine_point E → affine_point (E.base_change f)
+| affine_point.infinite := affine_point.infinite
+| (affine_point.finite P h) := affine_point.finite (P.base_change f)
+(affine_point_on_curve.base_change E P f h)
+
 -- ================
 -- Projective points
 -- ================
@@ -72,33 +143,105 @@ def eval_at_projective_point'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) : K :=
 P.Y^2*P.Z + E.a1*P.X*P.Y*P.Z + E.a3*P.Y*P.Z^2 - P.X^3 - E.a2*P.X^2*P.Z - E.a4*P.X*P.Z^2 - E.a6*P.Z^3
 
+@[simp]
+lemma eval_at_projective_point'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).eval_at_projective_point' (P.base_change' f) = f (E.eval_at_projective_point' P) :=
+begin
+  simp [base_change, projective_plane_point'.base_change', eval_at_projective_point'],
+end
+
 def eval_dX_at_projective_point'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) : K :=
 E.a1*P.Y*P.Z - 3*P.X^2 - 2*E.a2*P.X*P.Z - E.a4*P.Z^2
+
+@[simp]
+lemma eval_dX_at_projective_point'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).eval_dX_at_projective_point' (P.base_change' f) = f (E.eval_dX_at_projective_point' P) :=
+begin
+  simp [base_change, projective_plane_point'.base_change', eval_dX_at_projective_point'],
+end
 
 def eval_dY_at_projective_point'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) : K :=
 2*P.Y*P.Z + E.a1*P.X*P.Z + E.a3*P.Z^2
 
+@[simp]
+lemma eval_dY_at_projective_point'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).eval_dY_at_projective_point' (P.base_change' f) = f (E.eval_dY_at_projective_point' P) :=
+begin
+  simp [base_change, projective_plane_point'.base_change', eval_dY_at_projective_point'],
+end
+
 def eval_dZ_at_projective_point'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) : K :=
 P.Y^2 + E.a1*P.X*P.Y + 2*E.a3*P.Y*P.Z - E.a2*P.X^2 - 2*E.a4*P.X*P.Z - 3*E.a6*P.Z^2
+
+@[simp]
+lemma eval_dZ_at_projective_point'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).eval_dZ_at_projective_point' (P.base_change' f) = f (E.eval_dZ_at_projective_point' P) :=
+begin
+  simp [base_change, projective_plane_point'.base_change', eval_dZ_at_projective_point'],
+end
 
 def projective_point_on_curve'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) :=
 E.eval_at_projective_point' P = 0
 
+@[simp]
+lemma projective_point_on_curve'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_on_curve' (P.base_change' f) ↔ E.projective_point_on_curve' P :=
+begin
+  simp [projective_point_on_curve'],
+end
+
 def projective_point_dX_zero'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) :=
 E.eval_dX_at_projective_point' P = 0
+
+@[simp]
+lemma projective_point_dX_zero'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_dX_zero' (P.base_change' f) ↔ E.projective_point_dX_zero' P :=
+begin
+  simp [projective_point_dX_zero'],
+end
 
 def projective_point_dY_zero'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) :=
 E.eval_dY_at_projective_point' P = 0
 
+@[simp]
+lemma projective_point_dY_zero'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_dY_zero' (P.base_change' f) ↔ E.projective_point_dY_zero' P :=
+begin
+  simp [projective_point_dY_zero'],
+end
+
 def projective_point_dZ_zero'
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K) :=
 E.eval_dZ_at_projective_point' P = 0
+
+@[simp]
+lemma projective_point_dZ_zero'.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point' K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_dZ_zero' (P.base_change' f) ↔ E.projective_point_dZ_zero' P :=
+begin
+  simp [projective_point_dZ_zero'],
+end
 
 lemma projective_point_on_curve'.sound
 {K : Type*} [field K] (E : weierstrass_equation K) (P P' : projective_plane_point' K)
@@ -168,20 +311,72 @@ def projective_point_on_curve
 quotient.lift (E.projective_point_on_curve')
 (projective_point_on_curve'.sound E) P
 
+@[simp]
+lemma projective_point_on_curve.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_on_curve (P.base_change f) ↔ E.projective_point_on_curve P :=
+begin
+  revert P,
+  refine quotient.ind _,
+  intro P,
+  simp [projective_point_on_curve, projective_plane_point.base_change,
+    projective_plane_point'.base_change],
+end
+
 def projective_point_dX_zero
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
 quotient.lift (E.projective_point_dX_zero')
 (projective_point_dX_zero'.sound E) P
+
+@[simp]
+lemma projective_point_dX_zero.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_dX_zero (P.base_change f) ↔ E.projective_point_dX_zero P :=
+begin
+  revert P,
+  refine quotient.ind _,
+  intro P,
+  simp [projective_point_dX_zero, projective_plane_point.base_change,
+    projective_plane_point'.base_change],
+end
 
 def projective_point_dY_zero
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
 quotient.lift (E.projective_point_dY_zero')
 (projective_point_dY_zero'.sound E) P
 
+@[simp]
+lemma projective_point_dY_zero.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_dY_zero (P.base_change f) ↔ E.projective_point_dY_zero P :=
+begin
+  revert P,
+  refine quotient.ind _,
+  intro P,
+  simp [projective_point_dY_zero, projective_plane_point.base_change,
+    projective_plane_point'.base_change],
+end
+
 def projective_point_dZ_zero
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
 quotient.lift (E.projective_point_dZ_zero')
 (projective_point_dZ_zero'.sound E) P
+
+@[simp]
+lemma projective_point_dZ_zero.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_dZ_zero (P.base_change f) ↔ E.projective_point_dZ_zero P :=
+begin
+  revert P,
+  refine quotient.ind _,
+  intro P,
+  simp [projective_point_dZ_zero, projective_plane_point.base_change,
+    projective_plane_point'.base_change],
+end
 
 /--
 `Prop` which asserts that a projective point is on curve, and which is regular
@@ -190,6 +385,15 @@ def projective_point_regular
 {K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K) :=
 E.projective_point_on_curve P ∧ ¬ (E.projective_point_dX_zero P
 ∧ E.projective_point_dY_zero P ∧ E.projective_point_dZ_zero P)
+
+@[simp]
+lemma projective_point_regular.base_change
+{K : Type*} [field K] (E : weierstrass_equation K) (P : projective_plane_point K)
+{L : Type*} [field L] (f : ring_hom K L)
+: (E.base_change f).projective_point_regular (P.base_change f) ↔ E.projective_point_regular P :=
+begin
+  simp [projective_point_regular],
+end
 
 /--
 `Prop` which asserts that all projective points on curve are regular
@@ -205,6 +409,12 @@ Represents all projective points on curve
 structure projective_point
 {K : Type*} [field K] (E : weierstrass_equation K) :=
 mk :: (P : projective_plane_point K) (h : E.projective_point_on_curve P)
+
+def projective_point.base_change
+{K : Type*} [field K] {E : weierstrass_equation K}
+{L : Type*} [field L] (f : ring_hom K L)
+(P : projective_point E) : projective_point (E.base_change f)
+:= ⟨ P.P.base_change f, by simp [P.h] ⟩
 
 -- ================
 -- Relations of affine points and projective points
@@ -437,6 +647,43 @@ noncomputable def affine_point_equiv_to_projective_point
 : equiv E.affine_point E.projective_point :=
 ⟨ affine_point.to_projective_point, projective_point.to_affine_point,
   affine_point.embed_invertible, projective_point.embed_invertible ⟩
+
+lemma affine_point.embed_commutes_with_base_change
+{K : Type*} [field K] {E : weierstrass_equation K}
+{L : Type*} [field L] (f : ring_hom K L)
+(P : affine_point E)
+: (P.base_change f).to_projective_point = P.to_projective_point.base_change f :=
+begin
+  cases P, {
+    simp [affine_point.base_change, affine_point.to_projective_point,
+      projective_point.base_change,
+      projective_plane_point.base_change,
+      projective_plane_point.infinite_point_Y,
+      projective_plane_point'.base_change,
+      projective_plane_point'.base_change',
+      projective_plane_point'.infinite_point_Y],
+  },
+  simp [affine_point.base_change, affine_point.to_projective_point,
+    projective_point.base_change,
+    affine_plane_point.base_change,
+    affine_plane_point.to_projective_plane,
+    projective_plane_point.base_change,
+    affine_plane_point.to_projective_plane',
+    projective_plane_point'.base_change,
+    projective_plane_point'.base_change'],
+end
+
+lemma projective_point.embed_commutes_with_base_change
+{K : Type*} [field K] {E : weierstrass_equation K}
+{L : Type*} [field L] (f : ring_hom K L)
+(P : projective_point E)
+: (P.base_change f).to_affine_point = P.to_affine_point.base_change f :=
+begin
+  set Q := P.to_affine_point with hQ, clear_value Q,
+  rw [← projective_point.embed_invertible P, ← hQ,
+    ← affine_point.embed_commutes_with_base_change,
+    affine_point.embed_invertible],
+end
 
 /--
 All projective points on curve are regular if and only if
