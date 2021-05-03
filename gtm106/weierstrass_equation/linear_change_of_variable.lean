@@ -18,6 +18,10 @@ mk :: (u r s t : K) (hu : u ≠ 0)
 
 namespace linear_change_of_variable
 
+@[simp]
+lemma u_non_zero {K : Type*} [field K]
+(C : linear_change_of_variable K) : C.u ≠ 0 := C.hu
+
 -- ================
 -- Linear change of variables form a group
 -- ================
@@ -28,7 +32,7 @@ def identity (K : Type*) [field K] : linear_change_of_variable K :=
 def composite {K : Type*} [field K]
 (C C' : linear_change_of_variable K) : linear_change_of_variable K :=
 ⟨ C.u*C'.u, C.r*C'.u^2 + C'.r, C'.u*C.s + C'.s,
-  C.t*C'.u^3 + C.r*C'.s*C'.u^2 + C'.t, by simp [C.hu, C'.hu] ⟩
+  C.t*C'.u^3 + C.r*C'.s*C'.u^2 + C'.t, by simp ⟩
 
 lemma comp_assoc {K : Type*} [field K]
 (C C' C'' : linear_change_of_variable K) : ((C.composite C').composite C'') = (C.composite (C'.composite C'')) :=
@@ -53,15 +57,15 @@ end
 
 def inverse {K : Type*} [field K]
 (C : linear_change_of_variable K) : linear_change_of_variable K :=
-⟨ 1/C.u, -C.r/C.u^2, -C.s/C.u, (C.r*C.s-C.t)/C.u^3, by simp [C.hu] ⟩
+⟨ 1/C.u, -C.r/C.u^2, -C.s/C.u, (C.r*C.s-C.t)/C.u^3, by simp ⟩
 
 @[simp]
 lemma inv_comp {K : Type*} [field K]
 (C : linear_change_of_variable K) : C.inverse.composite C = identity K :=
 begin
   simp [composite, inverse, identity, ext_iff],
-  split, { simp [C.hu], }, split, { field_simp [pow_succ, C.hu], }, split, { field_simp [C.hu, mul_comm], },
-  field_simp [pow_succ, C.hu], ring,
+  split, { field_simp, ring, },
+  field_simp [pow_succ], ring,
 end
 
 @[simp]
@@ -69,8 +73,8 @@ lemma comp_inv {K : Type*} [field K]
 (C : linear_change_of_variable K) : C.composite C.inverse = identity K :=
 begin
   simp [composite, inverse, identity, ext_iff],
-  split, { simp [C.hu], }, split, { field_simp [pow_succ, C.hu], }, split, { field_simp [C.hu, mul_comm], },
-  field_simp [pow_succ, C.hu], ring,
+  split, { field_simp [pow_succ], }, split, { field_simp [mul_comm], },
+  field_simp [pow_succ], ring,
 end
 
 instance to_group (K : Type*) [field K] : group (linear_change_of_variable K)
@@ -106,11 +110,11 @@ lemma comp {K : Type*} [field K]
 (C'.composite C).change_curve E = C'.change_curve (C.change_curve E) :=
 begin
   simp [weierstrass_equation.ext_iff, composite, change_curve],
-  split, { field_simp [C.hu, C'.hu], ring, },
-  split, { field_simp [C.hu, C'.hu], ring, },
-  split, { field_simp [C.hu, C'.hu], ring, },
-  split, { field_simp [C.hu, C'.hu], ring, },
-  field_simp [C.hu, C'.hu], ring,
+  split, { field_simp, ring, },
+  split, { field_simp, ring, },
+  split, { field_simp, ring, },
+  split, { field_simp, ring, },
+  field_simp, ring,
 end
 
 instance to_has_scalar (K : Type*) [h : field K]
@@ -176,7 +180,7 @@ lemma b2 {K : Type*} [field K]
 : (C.change_curve E).b2 = (E.b2 + 12*C.r)/C.u^2 :=
 begin
   simp [weierstrass_equation.b2],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -186,7 +190,7 @@ lemma b4 {K : Type*} [field K]
 : (C.change_curve E).b4 = (E.b4 + C.r*E.b2 + 6*C.r^2)/C.u^4 :=
 begin
   simp [weierstrass_equation.b4, weierstrass_equation.b2],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -196,7 +200,7 @@ lemma b6 {K : Type*} [field K]
 : (C.change_curve E).b6 = (E.b6 + 2*C.r*E.b4 + C.r^2*E.b2 + 4*C.r^3)/C.u^6 :=
 begin
   simp [weierstrass_equation.b6, weierstrass_equation.b4, weierstrass_equation.b2],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -207,7 +211,7 @@ lemma b8 {K : Type*} [field K]
 begin
   simp [weierstrass_equation.b8, weierstrass_equation.b6,
     weierstrass_equation.b4, weierstrass_equation.b2],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -217,7 +221,7 @@ lemma c4 {K : Type*} [field K]
 : (C.change_curve E).c4 = E.c4/C.u^4 :=
 begin
   simp [weierstrass_equation.c4],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -227,7 +231,7 @@ lemma c6 {K : Type*} [field K]
 : (C.change_curve E).c6 = E.c6/C.u^6 :=
 begin
   simp [weierstrass_equation.c6],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -239,7 +243,7 @@ begin
   simp [weierstrass_equation.disc],
   simp [weierstrass_equation.b8, weierstrass_equation.b6,
     weierstrass_equation.b4, weierstrass_equation.b2],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -252,7 +256,7 @@ begin
   by_cases h : E.disc = 0, {
     simp [h],
   },
-  field_simp [pow_succ, C.hu, h],
+  field_simp [pow_succ, h],
   ring,
 end
 
@@ -267,14 +271,14 @@ lemma preserve_has_node' {K : Type*} [field K]
 (C : linear_change_of_variable K) (E : weierstrass_equation K)
 : E.has_node' ↔ (C.change_curve E).has_node' :=
 begin
-  simp [weierstrass_equation.has_node', C.hu],
+  simp [weierstrass_equation.has_node'],
 end
 
 lemma preserve_has_cusp' {K : Type*} [field K]
 (C : linear_change_of_variable K) (E : weierstrass_equation K)
 : E.has_cusp' ↔ (C.change_curve E).has_cusp' :=
 begin
-  simp [weierstrass_equation.has_cusp', C.hu],
+  simp [weierstrass_equation.has_cusp'],
 end
 
 -- ================
@@ -289,8 +293,8 @@ def change_projective_point_back' {K : Type*} [field K]
 (C : linear_change_of_variable K) (P : projective_plane_point' K) : projective_plane_point' K :=
 ⟨ C.u^2*P.X + C.r*P.Z, C.u^3*P.Y + C.u^2*C.s*P.X + C.t*P.Z, P.Z, by {
   rintros ⟨ hX, hY, hZ ⟩,
-  simp [hZ, C.hu] at hX,
-  simp [hZ, hX, C.hu] at hY,
+  simp [hZ] at hX,
+  simp [hZ, hX] at hY,
   exact P.h ⟨ hX, hY, hZ ⟩,
 } ⟩
 
@@ -324,8 +328,8 @@ lemma comp {K : Type*} [field K]
 C.change_affine_point (C'.change_affine_point P) = (C.composite C').change_affine_point P :=
 begin
   simp [composite, change_affine_point, affine_plane_point.ext_iff],
-  split, { field_simp [C.hu, C'.hu], ring, },
-  field_simp [C.hu, C'.hu], ring,
+  split, { field_simp, ring, },
+  field_simp, ring,
 end
 
 instance to_has_scalar (K : Type*) [h : field K]
@@ -346,9 +350,9 @@ def change_projective_point' {K : Type*} [field K]
 (C : linear_change_of_variable K) (P : projective_plane_point' K) : projective_plane_point' K :=
 ⟨ P.X*C.u - P.Z*C.r*C.u, P.Y - C.s*P.X + P.Z*(C.r*C.s-C.t), P.Z*C.u^3, by {
   rintros ⟨ hX, hY, hZ ⟩,
-  simp [C.hu] at hZ,
-  simp [hZ, C.hu] at hX,
-  simp [hZ, hX, C.hu] at hY,
+  simp at hZ,
+  simp [hZ] at hX,
+  simp [hZ, hX] at hY,
   exact P.h ⟨ hX, hY, hZ ⟩,
 } ⟩
 
@@ -414,8 +418,8 @@ lemma change_affine_point_back.inv {K : Type*} [field K]
 C.change_affine_point_back P = C.inverse.change_affine_point P :=
 begin
   simp [change_affine_point_back, inverse, change_affine_point],
-  split, { field_simp [pow_succ, C.hu], ring, },
-  field_simp [pow_succ, C.hu], ring,
+  split, { field_simp [pow_succ], ring, },
+  field_simp [pow_succ], ring,
 end
 
 @[simp]
@@ -429,10 +433,10 @@ begin
   simp [change_projective_point_back, inverse, change_projective_point,
     change_projective_point_back', change_projective_point'],
   use 1/C.u^3,
-  simp [C.hu],
-  split, { field_simp [pow_succ, C.hu], ring, },
-  split, { field_simp [pow_succ, C.hu], ring, },
-  field_simp [pow_succ, C.hu],
+  simp,
+  split, { field_simp [pow_succ], ring, },
+  split, { field_simp [pow_succ], ring, },
+  field_simp [pow_succ],
 end
 
 @[simp]
@@ -443,7 +447,7 @@ lemma eval_at_affine_point {K : Type*} [field K]
 begin
   simp [weierstrass_equation.eval_at_affine_point,
     change_curve, change_affine_point],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -457,7 +461,7 @@ begin
   simp [weierstrass_equation.eval_dx_at_affine_point,
     weierstrass_equation.eval_dy_at_affine_point,
     change_curve, change_affine_point],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -469,7 +473,7 @@ lemma eval_dy_at_affine_point {K : Type*} [field K]
 begin
   simp [weierstrass_equation.eval_dy_at_affine_point,
     change_curve, change_affine_point],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -482,7 +486,7 @@ begin
   simp [weierstrass_equation.eval_hessian_at_affine_point,
     weierstrass_equation.b2,
     change_curve, change_affine_point],
-  field_simp [pow_succ, C.hu],
+  field_simp [pow_succ],
   ring,
 end
 
@@ -492,7 +496,7 @@ lemma preserve_affine_point
 E.affine_point_on_curve P ↔ (C.change_curve E).affine_point_on_curve
 (C.change_affine_point P) :=
 begin
-  simp [weierstrass_equation.affine_point_on_curve, C.hu],
+  simp [weierstrass_equation.affine_point_on_curve],
 end
 
 lemma preserve_affine_regular_point
@@ -501,7 +505,7 @@ lemma preserve_affine_regular_point
 E.affine_point_regular P ↔ (C.change_curve E).affine_point_regular
 (C.change_affine_point P) :=
 begin
-  simp [weierstrass_equation.affine_point_regular, (C.preserve_affine_point E P).symm, C.hu],
+  simp [weierstrass_equation.affine_point_regular, (C.preserve_affine_point E P).symm],
   intro h,
   split, {
     intros h1 h2 h3,
@@ -538,7 +542,7 @@ E.affine_point_is_node P ↔ (C.change_curve E).affine_point_is_node
 (C.change_affine_point P) :=
 begin
   simp [weierstrass_equation.affine_point_is_node,
-    C.preserve_affine_singular_point E P, C.hu],
+    C.preserve_affine_singular_point E P],
 end
 
 lemma preserve_cusp
@@ -548,7 +552,7 @@ E.affine_point_is_cusp P ↔ (C.change_curve E).affine_point_is_cusp
 (C.change_affine_point P) :=
 begin
   simp [weierstrass_equation.affine_point_is_cusp,
-    C.preserve_affine_singular_point E P, C.hu],
+    C.preserve_affine_singular_point E P],
 end
 
 /-

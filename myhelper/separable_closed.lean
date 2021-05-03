@@ -11,8 +11,6 @@ import myhelper.char
 import myhelper.perfect
 import tactic
 
-noncomputable theory
-
 def my_sep_closed (K : Type*) [field K] :=
 ∀ f : polynomial K, f.separable → f.degree ≠ 0 → ∃ x : K, polynomial.eval₂ (ring_hom.id K) x f = 0
 

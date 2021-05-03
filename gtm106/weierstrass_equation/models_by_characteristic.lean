@@ -9,20 +9,20 @@ import tactic
 
 namespace weierstrass_equation
 
-def is_model_of_char_neq_2 {K : Type*} [field K]
+def is_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) :=
 E.a1 = 0 ∧ E.a3 = 0
 
 @[simp]
-lemma b2_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma b2_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.b2 = 4*E.a2 :=
 begin
-  simp [b2, h.1],
+  simp [b2, h.1, zero_pow],
 end
 
 @[simp]
-lemma b4_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma b4_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.b4 = 2*E.a4 :=
 begin
@@ -30,15 +30,15 @@ begin
 end
 
 @[simp]
-lemma b6_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma b6_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.b6 = 4*E.a6 :=
 begin
-  simp [b6, h.2],
+  simp [b6, h.2, zero_pow],
 end
 
 @[simp]
-lemma b8_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma b8_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.b8 = 4*E.a2*E.a6 - E.a4^2 :=
 begin
@@ -46,7 +46,7 @@ begin
 end
 
 @[simp]
-lemma c4_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma c4_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.c4 = 16*E.a2^2 - 48*E.a4 :=
 begin
@@ -55,7 +55,7 @@ begin
 end
 
 @[simp]
-lemma c6_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma c6_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.c6 = -64*E.a2^3 + 288*E.a2*E.a4 - 864*E.a6 :=
 begin
@@ -64,7 +64,7 @@ begin
 end
 
 @[simp]
-lemma disc_of_model_of_char_neq_2 {K : Type*} [field K]
+lemma disc_of_model_of_char_neq_2 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2) :
 E.disc = -64*E.a2^3*E.a6 + 16*E.a2^2*E.a4^2 - 64*E.a4^3 - 432*E.a6^2 +288*E.a2*E.a4*E.a6 :=
 begin
@@ -78,37 +78,36 @@ lemma have_model_of_char_neq_2 {K : Type*} [field K]
 begin
   replace hchar2 := prime_neq_char_is_non_zero K 2 (by norm_num) hchar2,
   norm_cast at hchar2,
-  let C : linear_change_of_variable K := ⟨ 1, 0, -E.a1/2, -E.a3/2, by simp ⟩,
-  use C,
+  use ⟨ 1, 0, -E.a1/2, -E.a3/2, by simp ⟩,
   simp [is_model_of_char_neq_2, linear_change_of_variable.change_curve],
   field_simp [hchar2],
   simp [mul_comm],
 end
 
-def is_model_of_char_neq_2_and_3 {K : Type*} [field K]
+def is_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) :=
 E.a1 = 0 ∧ E.a2 = 0 ∧ E.a3 = 0
 
 @[simp]
-lemma b2_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma b2_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.b2 = 0 :=
 begin
-  simp [b2, h.1, h.2.1],
+  simp [b2, h.1, h.2.1, zero_pow],
 end
 
 @[simp]
-lemma b4_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma b4_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.b4 = 2*E.a4 := E.b4_of_model_of_char_neq_2 ⟨ h.1, h.2.2 ⟩
 
 @[simp]
-lemma b6_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma b6_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.b6 = 4*E.a6 := E.b6_of_model_of_char_neq_2 ⟨ h.1, h.2.2 ⟩
 
 @[simp]
-lemma b8_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma b8_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.b8 = -E.a4^2 :=
 begin
@@ -116,7 +115,7 @@ begin
 end
 
 @[simp]
-lemma c4_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma c4_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.c4 = -48*E.a4 :=
 begin
@@ -125,7 +124,7 @@ begin
 end
 
 @[simp]
-lemma c6_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma c6_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.c6 = -864*E.a6 :=
 begin
@@ -134,7 +133,7 @@ begin
 end
 
 @[simp]
-lemma disc_of_model_of_char_neq_2_and_3 {K : Type*} [field K]
+lemma disc_of_model_of_char_neq_2_and_3 {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) :
 E.disc = -16*(4*E.a4^3 + 27*E.a6^2) :=
 begin
@@ -165,22 +164,22 @@ begin
   set E' := C.change_curve E with hE,
   replace hchar3 := prime_neq_char_is_non_zero K 3 (by norm_num) hchar3,
   norm_cast at hchar3,
-  let C' : linear_change_of_variable K := linear_change_of_variable.mk 1 (-E'.a2/3) 0 0 (by simp),
+  let C' : linear_change_of_variable K := ⟨ 1, -E'.a2/3, 0, 0, by simp ⟩,
   use C'.composite C,
   rw [linear_change_of_variable.change_curve.comp, ← hE],
   simp [is_model_of_char_neq_2_and_3,
     linear_change_of_variable.change_curve,
     h1.1, h1.2, zero_pow],
-  field_simp [hchar3, C.hu],
+  field_simp [hchar3],
   ring,
 end
 
-def is_model_of_char_3_j_non_zero {K : Type*} [field K]
+def is_model_of_char_3_j_non_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) :=
 E.a1 = 0 ∧ E.a3 = 0 ∧ E.a4 = 0
 
 @[simp]
-lemma c4_of_model_of_char_3_j_non_zero {K : Type*} [field K]
+lemma c4_of_model_of_char_3_j_non_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_3_j_non_zero) (hchar3 : ring_char K = 3) :
 E.c4 = E.a2^2 :=
 begin
@@ -190,7 +189,7 @@ begin
 end
 
 @[simp]
-lemma disc_of_model_of_char_3_j_non_zero {K : Type*} [field K]
+lemma disc_of_model_of_char_3_j_non_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_3_j_non_zero) (hchar3 : ring_char K = 3) :
 E.disc = -E.a2^3*E.a6 :=
 begin
@@ -216,7 +215,7 @@ begin
 end
 
 @[simp]
-lemma c4_of_model_of_char_3_j_zero {K : Type*} [field K]
+lemma c4_of_model_of_char_3_j_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) (hchar3 : ring_char K = 3) :
 E.c4 = 0 :=
 begin
@@ -225,7 +224,7 @@ begin
 end
 
 @[simp]
-lemma disc_of_model_of_char_3_j_zero {K : Type*} [field K]
+lemma disc_of_model_of_char_3_j_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_neq_2_and_3) (hchar3 : ring_char K = 3) :
 E.disc = -E.a4^3 :=
 begin
@@ -278,7 +277,7 @@ begin
     intro hdisc,
     simp [ha2, hdisc],
   },
-  let C' : linear_change_of_variable K := linear_change_of_variable.mk 1 (E'.a4/E'.a2) 0 0 (by simp),
+  let C' : linear_change_of_variable K := ⟨ 1, E'.a4/E'.a2, 0, 0, by simp ⟩,
   use C'.composite C,
   rw [linear_change_of_variable.change_curve.comp, ← hE],
   simp [is_model_of_char_3_j_non_zero,
@@ -288,16 +287,16 @@ begin
   ring_char3,
 end
 
-def is_model_of_char_2_j_non_zero {K : Type*} [field K]
+def is_model_of_char_2_j_non_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) :=
 E.a1 = 1 ∧ E.a3 = 0 ∧ E.a4 = 0
 
-def is_model_of_char_2_j_zero {K : Type*} [field K]
+def is_model_of_char_2_j_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) :=
 E.a1 = 0 ∧ E.a2 = 0
 
 @[simp]
-lemma c4_of_model_of_char_2_j_non_zero {K : Type*} [field K]
+lemma c4_of_model_of_char_2_j_non_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_2_j_non_zero) (hchar2 : ring_char K = 2) :
 E.c4 = 1 :=
 begin
@@ -307,7 +306,7 @@ begin
 end
 
 @[simp]
-lemma disc_of_model_of_char_2_j_non_zero {K : Type*} [field K]
+lemma disc_of_model_of_char_2_j_non_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_2_j_non_zero) (hchar2 : ring_char K = 2) :
 E.disc = E.a6 :=
 sub_eq_zero.1 begin
@@ -326,7 +325,7 @@ begin
 end
 
 @[simp]
-lemma c4_of_model_of_char_2_j_zero {K : Type*} [field K]
+lemma c4_of_model_of_char_2_j_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_2_j_zero) (hchar2 : ring_char K = 2) :
 E.c4 = 0 :=
 begin
@@ -336,7 +335,7 @@ begin
 end
 
 @[simp]
-lemma disc_of_model_of_char_2_j_zero {K : Type*} [field K]
+lemma disc_of_model_of_char_2_j_zero {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_model_of_char_2_j_zero) (hchar2 : ring_char K = 2) :
 E.disc = E.a3^4 :=
 sub_eq_zero.1 begin
@@ -371,7 +370,7 @@ begin
       rw ha1,
       ring,
     },
-    use linear_change_of_variable.mk 1 E.a2 0 0 (by simp),
+    use ⟨ 1, E.a2, 0, 0, by simp ⟩,
     simp [is_model_of_char_2_j_zero,
       linear_change_of_variable.change_curve,
       ha1],
@@ -383,7 +382,7 @@ begin
     intro hdisc,
     field_simp [ha1, hdisc],
   },
-  use linear_change_of_variable.mk E.a1 (E.a3/E.a1) 0 ((E.a1^2*E.a4+E.a3^2)/E.a1^3) ha1,
+  use ⟨ E.a1, E.a3/E.a1, 0, (E.a1^2*E.a4+E.a3^2)/E.a1^3, ha1 ⟩,
   simp [is_model_of_char_2_j_non_zero,
     linear_change_of_variable.change_curve,
     ha1],

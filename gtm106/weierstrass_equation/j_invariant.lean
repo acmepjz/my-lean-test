@@ -1,4 +1,4 @@
-import data.nat.prime
+-- import data.nat.prime
 import algebra.field
 import algebra.char_zero
 import algebra.char_p
@@ -7,125 +7,95 @@ import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.linear_change_of_variable
 import gtm106.weierstrass_equation.models_by_characteristic
 import myhelper.char
-import myhelper.test_perfect
-import myhelper.test_separable_closed
+import myhelper.perfect
+import myhelper.separable_closed
 import tactic
 
-lemma weierstrass_equation.exists_j {K : Type*} [field K]
-(j : K) : ∃ E : weierstrass_equation K,
-E.non_singular' ∧ E.j = j :=
+namespace weierstrass_equation
+
+/--
+For any `j ∈ K` there exists a Weierstrass equation over `K`
+which has non-zero discriminant and whose j-invariant equals `j`.
+-/
+lemma exists_j {K : Type*} [field K]
+(j_ : K) : ∃ E : weierstrass_equation K,
+E.non_singular' ∧ E.j = j_ :=
 begin
-  let E0 : weierstrass_equation K := weierstrass_equation.mk 0 0 1 0 0,
+  let E0 : weierstrass_equation K := ⟨ 0, 0, 1, 0, 0 ⟩,
   have hc4_0 : E0.c4 = 0 := by {
-    unfold weierstrass_equation.c4
-    weierstrass_equation.b2
-    weierstrass_equation.b4,
-    ring, ring,
+    simp [c4, b2, b4],
   },
   have hdisc_0 : E0.disc = -27 := by {
-    unfold weierstrass_equation.disc
-    weierstrass_equation.b2
-    weierstrass_equation.b4
-    weierstrass_equation.b6
-    weierstrass_equation.b8,
-    ring, ring,
+    simp [disc, b2, b4, b6, b8],
   },
   have hj_0 : E0.j = 0 := by {
-    unfold weierstrass_equation.j,
-    rw [hc4_0, hdisc_0],
-    ring,
+    simp [j, hc4_0, hdisc_0],
   },
-  let E1728 : weierstrass_equation K := weierstrass_equation.mk 0 0 0 1 0,
+  let E1728 : weierstrass_equation K := ⟨ 0, 0, 0, 1, 0 ⟩,
   have hc4_1728 : E1728.c4 = -48 := by {
-    unfold weierstrass_equation.c4
-    weierstrass_equation.b2
-    weierstrass_equation.b4,
-    ring, ring,
+    simp [c4, b2, b4], norm_num,
   },
   have hdisc_1728 : E1728.disc = -64 := by {
-    unfold weierstrass_equation.disc
-    weierstrass_equation.b2
-    weierstrass_equation.b4
-    weierstrass_equation.b6
-    weierstrass_equation.b8,
-    ring, ring,
+    simp [disc, b2, b4, b6, b8], norm_num,
   },
   have hj_1728 : E1728.j = 1728 := by {
-    unfold weierstrass_equation.j,
-    rw [hc4_1728, hdisc_1728],
+    simp [j, hc4_1728, hdisc_1728],
     by_cases hchar2 : ring_char K = 2, {
-      have h := dvd_char_is_zero hchar2 1728 (by norm_num), norm_cast at h, rw h, clear h,
-      have h := dvd_char_is_zero hchar2 48 (by norm_num), norm_cast at h, rw h, clear h,
-      ring,
+      ring_char2,
     },
     have h64 := power_of_prime_neq_char_is_non_zero K 64 2 6 (by norm_num) (by norm_num) hchar2,
     norm_num at h64,
-    field_simp [h64], ring,
+    field_simp [h64], norm_num,
   },
-  by_cases h0 : j = 0, {
+  by_cases h0 : j_ = 0, {
     rw h0,
     by_cases hchar3 : ring_char K = 3, {
       use E1728,
       split, {
-        unfold weierstrass_equation.non_singular',
-        rw hdisc_1728,
-        have hchar2 : ring_char K ≠ 2 := by { rw hchar3, norm_num, },
-        have h64 := power_of_prime_neq_char_is_non_zero K 64 2 6 (by norm_num) (by norm_num) hchar2,
-        norm_num at h64,
-        field_simp [h64],
+        simp [non_singular', hdisc_1728],
+        ring_char3,
       },
       rw hj_1728,
-      have h := dvd_char_is_zero hchar3 1728 (by norm_num), norm_cast at h, exact h,
+      ring_char3,
     },
     use E0,
     split, {
-      unfold weierstrass_equation.non_singular',
-      rw hdisc_0,
+      simp [non_singular', hdisc_0],
       have h27 := power_of_prime_neq_char_is_non_zero K 27 3 3 (by norm_num) (by norm_num) hchar3,
       norm_num at h27,
-      field_simp [h27],
     },
     exact hj_0,
   },
-  by_cases h1728 : j = 1728, {
+  by_cases h1728 : j_ = 1728, {
     rw h1728,
     by_cases hchar2 : ring_char K = 2, {
       exfalso,
-      have h := dvd_char_is_zero hchar2 1728 (by norm_num), norm_cast at h, rw h at h1728, clear h,
+      ring_char2 at h1728,
       exact h0 h1728,
     },
     use E1728,
     split, {
-      unfold weierstrass_equation.non_singular',
-      rw hdisc_1728,
+      simp [non_singular', hdisc_1728],
       have h64 := power_of_prime_neq_char_is_non_zero K 64 2 6 (by norm_num) (by norm_num) hchar2,
       norm_num at h64,
-      field_simp [h64],
     },
     exact hj_1728,
   },
-  replace h1728 : j-1728 ≠ 0 := sub_ne_zero.mpr h1728,
-  let E := weierstrass_equation.mk (j-1728) 0 0 (-36*(j-1728)^3) (-(j-1728)^5),
-  have hc4 : E.c4 = j * (j-1728)^3 := by {
-    unfold weierstrass_equation.c4
-    weierstrass_equation.b2
-    weierstrass_equation.b4,
-    ring, ring,
+  replace h1728 := sub_ne_zero.2 h1728,
+  let E : weierstrass_equation K := ⟨ j_-1728, 0, 0, -36*(j_-1728)^3, -(j_-1728)^5 ⟩,
+  have hc4 : E.c4 = j_ * (j_-1728)^3 := by {
+    simp [c4, b2, b4],
+    ring,
   },
-  have hdisc : E.disc = j^2 * (j-1728)^9 := by {
-    unfold weierstrass_equation.disc
-    weierstrass_equation.b2
-    weierstrass_equation.b4
-    weierstrass_equation.b6
-    weierstrass_equation.b8,
-    ring, ring,
+  have hdisc : E.disc = j_^2 * (j_-1728)^9 := by {
+    simp [disc, b2, b4, b6, b8],
+    ring,
   },
   have hns : E.disc ≠ 0 := by {
-    rw hdisc,
-    field_simp [h0, h1728],
+    simp [hdisc, h0, h1728],
   },
-  have hj : E.j = j := by {
-    unfold weierstrass_equation.j,
+  have hj : E.j = j_ := by {
+    unfold j,
     field_simp [hns],
     rw [hc4, hdisc],
     ring,
@@ -133,7 +103,7 @@ begin
   exact ⟨ E, hns, hj ⟩,
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_non_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+lemma same_j_implies_isom'.char_2.solve_s_for_j_non_zero {K : Type*} [field K] (hsc : my_sep_closed K)
 (E1 E1' : weierstrass_equation K)
 (hchar2 : ring_char K = 2)
 : ∃ s : K, s^2 + s + (E1.a2 + E1'.a2) = 0 :=
@@ -177,7 +147,7 @@ begin
   exact ⟨ s, hs ⟩,
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+lemma same_j_implies_isom'.char_2.solve_s_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
 (u : K)
 (E1 E1' : weierstrass_equation K)
 (hchar2 : ring_char K = 2)
@@ -233,7 +203,7 @@ begin
   exact ⟨ s, hs ⟩,
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_t_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+lemma same_j_implies_isom'.char_2.solve_t_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
 (u s : K)
 (E1 E1' : weierstrass_equation K)
 (hchar2 : ring_char K = 2)
@@ -289,48 +259,83 @@ begin
   exact ⟨ t, ht ⟩,
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_2 {K : Type*} [field K] (hsc : my_sep_closed K)
+lemma same_j_implies_isom'.char_2.j_non_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+{E E' : weierstrass_equation K} (hmod : E.is_model_of_char_2_j_non_zero) (hmod' : E'.is_model_of_char_2_j_non_zero)
+(h : E.a6 = E'.a6) (hj : E.a6 ≠ 0) (hj' : E'.a6 ≠ 0)
+(hchar2 : ring_char K = 2)
+: E.is_isom' E' :=
+begin
+  cases same_j_implies_isom'.char_2.solve_s_for_j_non_zero hsc E E' hchar2 with s hs,
+  let C : linear_change_of_variable K := ⟨ 1, 0, s, 0, by simp ⟩,
+  use C,
+  simp [ext_iff, linear_change_of_variable.change_curve,
+    hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, h],
+  ring_char2,
+  transitivity E.a2 - s - s ^ 2  + (s ^ 2 + s + (E.a2 + E'.a2)),
+  { rw hs, ring, },
+  rw ← sub_eq_zero,
+  ring_char2,
+end
+
+lemma same_j_implies_isom'.char_2.j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+{E E' : weierstrass_equation K} (hmod : E.is_model_of_char_2_j_zero) (hmod' : E'.is_model_of_char_2_j_zero)
+(hns : E.a3 ≠ 0) (hns' : E'.a3 ≠ 0)
+(hchar2 : ring_char K = 2)
+: E.is_isom' E' :=
+begin
+  cases sep_closed_implies_pow_surj K hsc 3 (by { rw hchar2, norm_num, }) (E.a3 / E'.a3) with u hu,
+  cases same_j_implies_isom'.char_2.solve_s_for_j_zero hsc u E E' hchar2 hns with s hs,
+  cases same_j_implies_isom'.char_2.solve_t_for_j_zero hsc u s E E' hchar2 hns with t ht,
+  let C := linear_change_of_variable.mk u (s^2) s t (by {
+    intro h, field_simp [h, hns'] at hu, exact hns hu.symm,
+  }),
+  use C,
+  simp [ext_iff, linear_change_of_variable.change_curve,
+    hmod.1, hmod.2, hmod'.1, hmod'.2, hu],
+  ring_char2,
+  split, { field_simp [hns, hns', mul_comm], },
+  split, {
+    field_simp [C.hu],
+    transitivity E.a4 - s * E.a3 + s ^ 4 - (s ^ 4 + E.a3 * s + (E.a4 - u ^ 4 * E'.a4)),
+    { rw hs, ring, },
+    rw ← sub_eq_zero,
+    ring_char2,
+  },
+  field_simp [C.hu],
+  transitivity E.a6 + s ^ 2 * E.a4 + s ^ 6 - t * E.a3 - t ^ 2 - (t ^ 2 + E.a3 * t + (s ^ 6 + E.a4 * s ^ 2 + E.a6 - u ^ 6 * E'.a6)),
+  { rw ht, ring, },
+  rw ← sub_eq_zero,
+  ring_char2,
+end
+
+lemma same_j_implies_isom'.char_2 {K : Type*} [field K] (hsc : my_sep_closed K)
 {E E' : weierstrass_equation K} (h : E.j = E'.j) (hns : E.non_singular') (hns' : E'.non_singular')
 (hchar2 : ring_char K = 2)
-: E.is_isomorphic' E' :=
+: E.is_isom' E' :=
 begin
+  change E ≈ E',
+  refine quotient.exact _,
+  have hj0 : E.j = isom_class'.j ⟦E⟧ := by { simp [isom_class'.j], },
+  have hj'0 : E'.j = isom_class'.j ⟦E'⟧ := by { simp [isom_class'.j], },
+  rw [hj0, hj'0] at h,
+  replace hns : isom_class'.non_singular' ⟦E⟧ := by { simp [isom_class'.non_singular', hns], },
+  replace hns' : isom_class'.non_singular' ⟦E'⟧ := by { simp [isom_class'.non_singular', hns'], },
   rcases E.have_model_of_char_2 hchar2 with ⟨ hj, C, hmod ⟩ | ⟨ hj, C, hmod ⟩, {
     replace hj := hj hns,
     rcases E'.have_model_of_char_2 hchar2 with ⟨ hj', C', hmod' ⟩ | ⟨ hj', C', hmod' ⟩, {
       replace hj' := hj' hns',
-      rw C.preserve_non_singular' E at hns,
-      rw C'.preserve_non_singular' E' at hns',
-      unfold weierstrass_equation.non_singular' at hns hns',
-      rw ← C.j E at h hj,
-      rw ← C'.j E' at h hj',
-      set E1 := C.change_curve E,
-      set E1' := C'.change_curve E',
-      rw ← weierstrass_equation.is_isomorphic'.transitive E E1 E' ⟨ C, rfl ⟩,
-      rw weierstrass_equation.is_isomorphic'.transitive' E1 E' E1' ⟨ C', rfl ⟩,
-      clear_value E1 E1', clear C C' E E',
-      rw E1.j_of_model_of_char_2_j_non_zero hmod hchar2 at h hj,
-      rw E1'.j_of_model_of_char_2_j_non_zero hmod' hchar2 at h hj',
-      field_simp at hj hj',
-      field_simp [hj, hj'] at h,
-      cases weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_non_zero hsc E1 E1' hchar2 with s hs,
-      let C : linear_change_of_variable K := linear_change_of_variable.mk 1 0 s 0 (by simp),
-      use C,
-      rw weierstrass_equation.ext_iff,
-      unfold linear_change_of_variable.change_curve
-      linear_change_of_variable.u
-      linear_change_of_variable.r
-      linear_change_of_variable.s
-      linear_change_of_variable.t
-      weierstrass_equation.a1
-      weierstrass_equation.a2
-      weierstrass_equation.a3
-      weierstrass_equation.a4
-      weierstrass_equation.a6,
-      rw [hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, h],
-      have h2eq0 := dvd_char_is_zero hchar2 2 (by norm_num), norm_cast at h2eq0, rw h2eq0,
-      simp [zero_pow],
-      calc E1.a2 - s - s ^ 2 = E1.a2 - s - s ^ 2  + (s ^ 2 + s + (E1.a2 + E1'.a2)) : by { rw hs, ring, }
-      ... = E1'.a2 : by { ring, rw h2eq0, ring, },
+      rw hj0 at hj,
+      rw hj'0 at hj',
+      set E1 := C.change_curve E with hE1, clear_value E1,
+      set E1' := C'.change_curve E' with hE1', clear_value E1',
+      replace hE1 : ⟦E⟧ = ⟦E1⟧ := quotient.sound (by { use C, exact hE1.symm, }),
+      replace hE1' : ⟦E'⟧ = ⟦E1'⟧ := quotient.sound (by { use C', exact hE1'.symm, }),
+      rw hE1 at *,
+      rw hE1' at *,
+      clear hE1 hE1' hj0 hj'0 C C' E E',
+      refine quotient.sound _,
+      simp [isom_class'.j, hmod, hmod', hchar2] at h hj hj',
+      exact same_j_implies_isom'.char_2.j_non_zero hsc hmod hmod' h hj hj' hchar2,
     }, {
       exfalso, finish,
     },
@@ -338,55 +343,23 @@ begin
     rcases E'.have_model_of_char_2 hchar2 with ⟨ hj', C', hmod' ⟩ | ⟨ hj', C', hmod' ⟩, {
       exfalso, finish,
     }, {
-      rw C.preserve_non_singular' E at hns,
-      rw C'.preserve_non_singular' E' at hns',
-      unfold weierstrass_equation.non_singular' at hns hns',
-      rw ← C.j E at h hj,
-      rw ← C'.j E' at h hj',
-      set E1 := C.change_curve E,
-      set E1' := C'.change_curve E',
-      rw ← weierstrass_equation.is_isomorphic'.transitive E E1 E' ⟨ C, rfl ⟩,
-      rw weierstrass_equation.is_isomorphic'.transitive' E1 E' E1' ⟨ C', rfl ⟩,
-      clear_value E1 E1', clear C C' E E',
-      rw E1.disc_of_model_of_char_2_j_zero hmod hchar2 at hns,
-      rw E1'.disc_of_model_of_char_2_j_zero hmod' hchar2 at hns',
-      field_simp at hns hns',
-      cases sep_closed_implies_pow_surj K hsc 3 (by { rw hchar2, norm_num, }) (E1.a3 / E1'.a3) with u hu,
-      cases weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_s_for_j_zero hsc u E1 E1' hchar2 hns with s hs,
-      cases weierstrass_equation.same_j_implies_isomorphic'_char_2.solve_t_for_j_zero hsc u s E1 E1' hchar2 hns with t ht,
-      let C := linear_change_of_variable.mk u (s^2) s t (by {
-        intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact hns hu.symm,
-      }),
-      use C,
-      rw weierstrass_equation.ext_iff,
-      unfold linear_change_of_variable.change_curve
-      linear_change_of_variable.u
-      linear_change_of_variable.r
-      linear_change_of_variable.s
-      linear_change_of_variable.t
-      weierstrass_equation.a1
-      weierstrass_equation.a2
-      weierstrass_equation.a3
-      weierstrass_equation.a4
-      weierstrass_equation.a6,
-      rw [hmod.1, hmod.2, hmod'.1, hmod'.2, hu],
-      have h2eq0 := dvd_char_is_zero hchar2 2 (by norm_num), norm_cast at h2eq0, rw h2eq0,
-      have h3eq1 := cong_char_is_eq hchar2 3 1 (by norm_num), norm_cast at h3eq1, rw h3eq1,
-      field_simp [hns, hns', C.hu],
-      split, { ring, },
-      split, {
-        calc E1.a4 - s * E1.a3 + (s ^ 2) ^ 2
-        = E1.a4 - s * E1.a3 + s ^ 4 - (s ^ 4 + E1.a3 * s + (E1.a4 - u ^ 4 * E1'.a4)) : by { rw hs, ring, }
-        ... = E1'.a4 * u ^ 4 : by { ring, rw h2eq0, ring, },
-      },
-      calc E1.a6 + s ^ 2 * E1.a4 + (s ^ 2) ^ 3 - t * E1.a3 - t ^ 2
-      = E1.a6 + s ^ 2 * E1.a4 + s ^ 6 - t * E1.a3 - t ^ 2 - (t ^ 2 + E1.a3 * t + (s ^ 6 + E1.a4 * s ^ 2 + E1.a6 - u ^ 6 * E1'.a6)) : by { rw ht, ring, }
-      ... = E1'.a6 * u ^ 6 : by { ring, rw h2eq0, ring, },
+      rw hj0 at hj,
+      rw hj'0 at hj',
+      set E1 := C.change_curve E with hE1, clear_value E1,
+      set E1' := C'.change_curve E' with hE1', clear_value E1',
+      replace hE1 : ⟦E⟧ = ⟦E1⟧ := quotient.sound (by { use C, exact hE1.symm, }),
+      replace hE1' : ⟦E'⟧ = ⟦E1'⟧ := quotient.sound (by { use C', exact hE1'.symm, }),
+      rw hE1 at *,
+      rw hE1' at *,
+      clear hE1 hE1' hj0 hj'0 C C' E E',
+      refine quotient.sound _,
+      simp [isom_class'.non_singular', non_singular', hmod, hmod', hchar2] at hns hns',
+      exact same_j_implies_isom'.char_2.j_zero hsc hmod hmod' hns hns' hchar2,
     },
   },
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_3.solve_r_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+lemma same_j_implies_isom'.char_3.solve_r_for_j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
 (u : K)
 (E1 E1' : weierstrass_equation K)
 (hchar3 : ring_char K = 3)
@@ -442,57 +415,81 @@ begin
   exact ⟨ r, hr ⟩,
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic'_char_3 {K : Type*} [field K] (hsc : my_sep_closed K)
+lemma same_j_implies_isom'.char_3.j_non_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+{E E' : weierstrass_equation K} (hmod : E.is_model_of_char_3_j_non_zero) (hmod' : E'.is_model_of_char_3_j_non_zero)
+(h : E.j = E'.j) (hj : E.j ≠ 0) (hj' : E'.j ≠ 0)
+(hchar3 : ring_char K = 3)
+: E.is_isom' E' :=
+begin
+  simp [hmod, hmod', hchar3] at h hj hj',
+  push_neg at hj hj',
+  cases sep_closed_implies_pow_surj K hsc 2 (by { rw hchar3, norm_num, }) (E.a2 / E'.a2) with u hu,
+  let C := linear_change_of_variable.mk u 0 0 0 (by {
+    intro h, field_simp [h, hj'.1] at hu, exact hj.1 hu.symm,
+  }),
+  use C,
+  simp [ext_iff, linear_change_of_variable.change_curve,
+    hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, hu],
+  split,
+  { field_simp [hj.1, hj'.1, mul_comm], },
+  transitivity E.a6 / (u ^ 2) ^ 3,
+  { congr' 1, ring, },
+  rw hu,
+  field_simp [hj.1, hj.2, hj'.1, hj'.2] at h ⊢,
+  rw [mul_comm E.a6, mul_comm E'.a6, h],
+end
+
+lemma same_j_implies_isom'.char_3.j_zero {K : Type*} [field K] (hsc : my_sep_closed K)
+{E E' : weierstrass_equation K} (hmod : E.is_model_of_char_neq_2_and_3) (hmod' : E'.is_model_of_char_neq_2_and_3)
+(hns : E.a4 ≠ 0) (hns' : E'.a4 ≠ 0)
+(hchar3 : ring_char K = 3)
+: E.is_isom' E' :=
+begin
+  cases sep_closed_implies_pow_surj K hsc 4 (by { rw hchar3, norm_num, }) (E.a4 / E'.a4) with u hu,
+  cases same_j_implies_isom'.char_3.solve_r_for_j_zero hsc u E E' hchar3 hns with r hr,
+  let C := linear_change_of_variable.mk u r 0 0 (by {
+    intro h, field_simp [h, hns'] at hu, exact hns hu.symm,
+  }),
+  use C,
+  simp [ext_iff, linear_change_of_variable.change_curve,
+    hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, hu],
+  ring_char3,
+  split, { field_simp [hns, hns', mul_comm], },
+  field_simp [C.hu],
+  transitivity E.a6 + r * E.a4 + r ^ 3 - (r ^ 3 + E.a4 * r + (E.a6 - u ^ 6 * E'.a6)),
+  { rw hr, ring, },
+  rw ← sub_eq_zero,
+  ring,
+end
+
+lemma same_j_implies_isom'.char_3 {K : Type*} [field K] (hsc : my_sep_closed K)
 {E E' : weierstrass_equation K} (h : E.j = E'.j) (hns : E.non_singular') (hns' : E'.non_singular')
 (hchar3 : ring_char K = 3)
-: E.is_isomorphic' E' :=
+: E.is_isom' E' :=
 begin
-  have hcharndvd2 : ¬ ring_char K ∣ 2 := by { rw hchar3, norm_num, },
-  have hcharndvd4 : ¬ ring_char K ∣ 4 := by { rw hchar3, norm_num, },
+  change E ≈ E',
+  refine quotient.exact _,
+  have hj0 : E.j = isom_class'.j ⟦E⟧ := by { simp [isom_class'.j], },
+  have hj'0 : E'.j = isom_class'.j ⟦E'⟧ := by { simp [isom_class'.j], },
+  rw [hj0, hj'0] at h,
+  replace hns : isom_class'.non_singular' ⟦E⟧ := by { simp [isom_class'.non_singular', hns], },
+  replace hns' : isom_class'.non_singular' ⟦E'⟧ := by { simp [isom_class'.non_singular', hns'], },
   rcases E.have_model_of_char_3 hchar3 with ⟨ hj, C, hmod ⟩ | ⟨ hj, C, hmod ⟩, {
     replace hj := hj hns,
     rcases E'.have_model_of_char_3 hchar3 with ⟨ hj', C', hmod' ⟩ | ⟨ hj', C', hmod' ⟩, {
       replace hj' := hj' hns',
-      rw C.preserve_non_singular' E at hns,
-      rw C'.preserve_non_singular' E' at hns',
-      unfold weierstrass_equation.non_singular' at hns hns',
-      rw ← C.j E at h hj,
-      rw ← C'.j E' at h hj',
-      set E1 := C.change_curve E,
-      set E1' := C'.change_curve E',
-      rw ← weierstrass_equation.is_isomorphic'.transitive E E1 E' ⟨ C, rfl ⟩,
-      rw weierstrass_equation.is_isomorphic'.transitive' E1 E' E1' ⟨ C', rfl ⟩,
-      clear_value E1 E1', clear C C' E E',
-      rw E1.j_of_model_of_char_3_j_non_zero hmod hchar3 at h hj,
-      rw E1'.j_of_model_of_char_3_j_non_zero hmod' hchar3 at h hj',
-      field_simp at hj hj',
-      push_neg at hj hj',
-      cases sep_closed_implies_pow_surj K hsc 2 hcharndvd2 (E1.a2 / E1'.a2) with u hu,
-      let C := linear_change_of_variable.mk u 0 0 0 (by {
-        intro h, rw h at hu, field_simp [zero_pow, hj'.1] at hu, exact hj.1 hu.symm,
-      }),
-      use C,
-      rw weierstrass_equation.ext_iff,
-      unfold linear_change_of_variable.change_curve
-      linear_change_of_variable.u
-      linear_change_of_variable.r
-      linear_change_of_variable.s
-      linear_change_of_variable.t
-      weierstrass_equation.a1
-      weierstrass_equation.a2
-      weierstrass_equation.a3
-      weierstrass_equation.a4
-      weierstrass_equation.a6,
-      rw [hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, hu],
-      field_simp [zero_pow, hj.1, hj.2, hj'.1, hj'.2], split, { ring, },
-      field_simp [hj.2, hj'.2] at h,
-      calc E1.a6 / u ^ 6 = E1.a6 / (u ^ 2) ^ 3 : by { congr' 1, ring, }
-      ... = E1'.a6 : by {
-        rw hu,
-        field_simp [hj.1, hj.2, hj'.1, hj'.2],
-        rw [mul_comm E1.a6 _, mul_comm E1'.a6 _],
-        exact h.symm,
-      },
+      rw hj0 at hj,
+      rw hj'0 at hj',
+      set E1 := C.change_curve E with hE1, clear_value E1,
+      set E1' := C'.change_curve E' with hE1', clear_value E1',
+      replace hE1 : ⟦E⟧ = ⟦E1⟧ := quotient.sound (by { use C, exact hE1.symm, }),
+      replace hE1' : ⟦E'⟧ = ⟦E1'⟧ := quotient.sound (by { use C', exact hE1'.symm, }),
+      rw hE1 at *,
+      rw hE1' at *,
+      clear hE1 hE1' hj0 hj'0 C C' E E',
+      refine quotient.sound _,
+      simp [isom_class'.j] at h hj hj',
+      exact same_j_implies_isom'.char_3.j_non_zero hsc hmod hmod' h hj hj' hchar3,
     }, {
       exfalso, finish,
     },
@@ -500,54 +497,36 @@ begin
     rcases E'.have_model_of_char_3 hchar3 with ⟨ hj', C', hmod' ⟩ | ⟨ hj', C', hmod' ⟩, {
       exfalso, finish,
     }, {
-      rw C.preserve_non_singular' E at hns,
-      rw C'.preserve_non_singular' E' at hns',
-      unfold weierstrass_equation.non_singular' at hns hns',
-      rw ← C.j E at h hj,
-      rw ← C'.j E' at h hj',
-      set E1 := C.change_curve E,
-      set E1' := C'.change_curve E',
-      rw ← weierstrass_equation.is_isomorphic'.transitive E E1 E' ⟨ C, rfl ⟩,
-      rw weierstrass_equation.is_isomorphic'.transitive' E1 E' E1' ⟨ C', rfl ⟩,
-      clear_value E1 E1', clear C C' E E',
-      rw E1.disc_of_model_of_char_3_j_zero hmod hchar3 at hns,
-      rw E1'.disc_of_model_of_char_3_j_zero hmod' hchar3 at hns',
-      field_simp at hns hns',
-      cases sep_closed_implies_pow_surj K hsc 4 hcharndvd4 (E1.a4 / E1'.a4) with u hu,
-      cases weierstrass_equation.same_j_implies_isomorphic'_char_3.solve_r_for_j_zero hsc u E1 E1' hchar3 hns with r hr,
-      let C := linear_change_of_variable.mk u r 0 0 (by {
-        intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact hns hu.symm,
-      }),
-      use C,
-      rw weierstrass_equation.ext_iff,
-      unfold linear_change_of_variable.change_curve
-      linear_change_of_variable.u
-      linear_change_of_variable.r
-      linear_change_of_variable.s
-      linear_change_of_variable.t
-      weierstrass_equation.a1
-      weierstrass_equation.a2
-      weierstrass_equation.a3
-      weierstrass_equation.a4
-      weierstrass_equation.a6,
-      rw [hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, hu],
-      have h := dvd_char_is_zero hchar3 3 (by norm_num), norm_cast at h, rw h, clear h,
-      field_simp [zero_pow, hns, hns', C.hu], split, { ring, },
-      calc E1.a6 + r * E1.a4 + r ^ 3 = E1.a6 + r * E1.a4 + r ^ 3 - (r ^ 3 + E1.a4 * r + (E1.a6 - u ^ 6 * E1'.a6)) : by { rw hr, ring, }
-      ... = E1'.a6 * u ^ 6 : by ring,
+      rw hj0 at hj,
+      rw hj'0 at hj',
+      set E1 := C.change_curve E with hE1, clear_value E1,
+      set E1' := C'.change_curve E' with hE1', clear_value E1',
+      replace hE1 : ⟦E⟧ = ⟦E1⟧ := quotient.sound (by { use C, exact hE1.symm, }),
+      replace hE1' : ⟦E'⟧ = ⟦E1'⟧ := quotient.sound (by { use C', exact hE1'.symm, }),
+      rw hE1 at *,
+      rw hE1' at *,
+      clear hE1 hE1' hj0 hj'0 C C' E E',
+      refine quotient.sound _,
+      simp [isom_class'.non_singular', non_singular', hmod, hmod', hchar3] at hns hns',
+      exact same_j_implies_isom'.char_3.j_zero hsc hmod hmod' hns hns' hchar3,
     },
   },
 end
 
-lemma weierstrass_equation.same_j_implies_isomorphic' {K : Type*} [field K] (hsc : my_sep_closed K)
+
+/--
+Non-singular Weierstrass equations with same j-invariant are isomorphic
+over a separable closed field.
+-/
+lemma same_j_implies_isom' {K : Type*} [field K] (hsc : my_sep_closed K)
 {E E' : weierstrass_equation K} (h : E.j = E'.j) (hns : E.non_singular') (hns' : E'.non_singular')
-: E.is_isomorphic' E' :=
+: E.is_isom' E' :=
 begin
   by_cases hchar2 : ring_char K = 2, {
-    exact weierstrass_equation.same_j_implies_isomorphic'_char_2 hsc h hns hns' hchar2,
+    exact same_j_implies_isom'.char_2 hsc h hns hns' hchar2,
   },
   by_cases hchar3 : ring_char K = 3, {
-    exact weierstrass_equation.same_j_implies_isomorphic'_char_3 hsc h hns hns' hchar3,
+    exact same_j_implies_isom'.char_3 hsc h hns hns' hchar3,
   },
   have hcharndvd2 : ¬ ring_char K ∣ 2 := by {
     cases char_is_prime_or_zero' K with hh hh, {
@@ -575,23 +554,24 @@ begin
     },
     rw hh, norm_num,
   },
+  change E ≈ E',
+  refine quotient.exact _,
+  replace h : isom_class'.j ⟦E⟧ = isom_class'.j ⟦E'⟧ := by { simp [isom_class'.j, h], },
+  replace hns : isom_class'.non_singular' ⟦E⟧ := by { simp [isom_class'.non_singular', hns], },
+  replace hns' : isom_class'.non_singular' ⟦E'⟧ := by { simp [isom_class'.non_singular', hns'], },
   rcases E.have_model_of_char_neq_2_and_3 hchar2 hchar3 with ⟨ C, hmod ⟩,
   rcases E'.have_model_of_char_neq_2_and_3 hchar2 hchar3 with ⟨ C', hmod' ⟩,
-  rw C.preserve_non_singular' E at hns,
-  rw C'.preserve_non_singular' E' at hns',
-  unfold weierstrass_equation.non_singular' at hns hns',
-  rw [← C.j E, ← C'.j E'] at h,
-  set E1 := C.change_curve E,
-  set E1' := C'.change_curve E',
-  rw ← weierstrass_equation.is_isomorphic'.transitive E E1 E' ⟨ C, rfl ⟩,
-  rw weierstrass_equation.is_isomorphic'.transitive' E1 E' E1' ⟨ C', rfl ⟩,
-  clear_value E1 E1', clear C C' E E',
-  unfold weierstrass_equation.j at h,
-  field_simp [hns, hns'] at h,
-  rw [E1.c4_of_model_of_char_neq_2_and_3 hmod,
-  E1.disc_of_model_of_char_neq_2_and_3 hmod,
-  E1'.c4_of_model_of_char_neq_2_and_3 hmod',
-  E1'.disc_of_model_of_char_neq_2_and_3 hmod'] at h,
+  set E1 := C.change_curve E with hE1, clear_value E1,
+  set E1' := C'.change_curve E' with hE1', clear_value E1',
+  replace hE1 : ⟦E⟧ = ⟦E1⟧ := quotient.sound (by { use C, exact hE1.symm, }),
+  replace hE1' : ⟦E'⟧ = ⟦E1'⟧ := quotient.sound (by { use C', exact hE1'.symm, }),
+  rw hE1 at *,
+  rw hE1' at *,
+  clear hE1 hE1' C C' E E',
+  refine quotient.sound _,
+  simp [isom_class'.non_singular', non_singular'] at hns hns',
+  field_simp [isom_class'.j, j, hns, hns'] at h,
+  simp [hmod, hmod'] at h,
   ring_exp at h,
   replace h := calc E1.a4 ^ 3 * E1'.a6 ^ 2 * 16^4 * 27^2
   = (E1.a4 ^ 3 * (E1'.a4 ^ 3 * 7077888) + E1.a4 ^ 3 * (E1'.a6 ^ 2 * 47775744)) - E1.a4 ^ 3 * (E1'.a4 ^ 3 * 7077888) : by ring
@@ -604,65 +584,40 @@ begin
   rw E1'.disc_of_model_of_char_neq_2_and_3 hmod' at hns',
   by_cases ha4 : E1.a4 = 0, {
     rw ha4 at h hns,
-    field_simp [zero_pow, h16, h27] at hns,
-    field_simp [zero_pow, hns] at h,
-    rw h at hns',
-    field_simp [zero_pow, h16, h27] at hns',
+    simp [zero_pow, h16, h27] at hns,
+    simp [zero_pow, hns] at h,
+    simp [h, zero_pow, h16, h27] at hns',
     cases sep_closed_implies_pow_surj K hsc 6 hcharndvd6 (E1.a6/E1'.a6) with u hu,
     let C := linear_change_of_variable.mk u 0 0 0 (by {
       intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact hns hu.symm,
     }),
     use C,
-    rw weierstrass_equation.ext_iff,
-    unfold linear_change_of_variable.change_curve
-    linear_change_of_variable.u
-    linear_change_of_variable.r
-    linear_change_of_variable.s
-    linear_change_of_variable.t
-    weierstrass_equation.a1
-    weierstrass_equation.a2
-    weierstrass_equation.a3
-    weierstrass_equation.a4
-    weierstrass_equation.a6,
-    rw [hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, ha4, h, hu],
+    simp [ext_iff, linear_change_of_variable.change_curve,
+      hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, ha4, h, hu],
     field_simp [zero_pow, hns], ring,
   },
   by_cases ha6 : E1.a6 = 0, {
     rw ha6 at h hns,
-    field_simp [zero_pow, ha4] at h,
-    rw h at hns',
-    field_simp [zero_pow, h4, h16] at hns',
+    simp [zero_pow, ha4] at h,
+    simp [h, zero_pow, h4, h16] at hns',
     cases sep_closed_implies_pow_surj K hsc 4 hcharndvd4 (E1.a4/E1'.a4) with u hu,
     let C := linear_change_of_variable.mk u 0 0 0 (by {
       intro h, rw h at hu, field_simp [zero_pow, hns'] at hu, exact ha4 hu.symm,
     }),
     use C,
-    rw weierstrass_equation.ext_iff,
-    unfold linear_change_of_variable.change_curve
-    linear_change_of_variable.u
-    linear_change_of_variable.r
-    linear_change_of_variable.s
-    linear_change_of_variable.t
-    weierstrass_equation.a1
-    weierstrass_equation.a2
-    weierstrass_equation.a3
-    weierstrass_equation.a4
-    weierstrass_equation.a6,
-    rw [hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, ha6, h, hu],
+    simp [ext_iff, linear_change_of_variable.change_curve,
+      hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, ha6, h, hu],
     field_simp [zero_pow, ha4], ring,
   },
   by_cases ha4' : E1'.a4 = 0, {
     exfalso,
-    rw ha4' at h,
-    field_simp [zero_pow, ha4] at h,
-    rw [ha4', h] at hns',
-    field_simp [zero_pow] at hns',
+    simp [ha4', zero_pow, ha4] at h,
+    simp [ha4', h, zero_pow] at hns',
     exact hns',
   },
   by_cases ha6' : E1'.a6 = 0, {
     exfalso,
-    rw ha6' at h,
-    field_simp [zero_pow, ha4', ha6] at h,
+    simp [ha6', zero_pow, ha4', ha6] at h,
     exact h,
   },
   cases sep_closed_implies_pow_surj K hsc 2 hcharndvd2 ((E1.a6 / E1'.a6) / (E1.a4 / E1'.a4)) with u hu,
@@ -687,17 +642,9 @@ begin
     intro h, rw h at hu, field_simp [zero_pow, ha4, ha6, ha4', ha6'] at hu, exact hu,
   }),
   use C,
-  rw weierstrass_equation.ext_iff,
-  unfold linear_change_of_variable.change_curve
-  linear_change_of_variable.u
-  linear_change_of_variable.r
-  linear_change_of_variable.s
-  linear_change_of_variable.t
-  weierstrass_equation.a1
-  weierstrass_equation.a2
-  weierstrass_equation.a3
-  weierstrass_equation.a4
-  weierstrass_equation.a6,
-  rw [hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, hu4, hu6],
+  simp [ext_iff, linear_change_of_variable.change_curve,
+    hmod.1, hmod.2.1, hmod.2.2, hmod'.1, hmod'.2.1, hmod'.2.2, hu4, hu6],
   field_simp [zero_pow, ha4, ha6], split; ring,
 end
+
+end weierstrass_equation

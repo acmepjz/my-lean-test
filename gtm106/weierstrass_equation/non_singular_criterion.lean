@@ -5,70 +5,65 @@ import gtm106.naive_plane
 import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.linear_change_of_variable
 import gtm106.weierstrass_equation.models_by_characteristic
-import myhelper.test_char
-import myhelper.test_perfect
+import myhelper.char
+import myhelper.perfect
 import tactic
 
-noncomputable theory
+namespace weierstrass_equation
 
-def weierstrass_equation.is_singular_model
-{K : Type*} [field K] (E : weierstrass_equation K) :=
+/--
+`Prop` that a Weierstrass equation is singular with singular point `(0,0)`.
+-/
+def is_singular_model
+{K : Type*} [comm_ring K] (E : weierstrass_equation K) :=
 E.a3 = 0 ∧ E.a4 = 0 ∧ E.a6 = 0
 
-lemma weierstrass_equation.c4_of_singular_model {K : Type*} [field K]
+@[simp]
+lemma c4_of_singular_model {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_singular_model) :
 E.c4 = E.b2^2 :=
 begin
-  unfold weierstrass_equation.c4
-  weierstrass_equation.b2
-  weierstrass_equation.b4,
-  rw [h.1, h.2.1],
-  ring,
+  simp [c4, b2, b4, h.1, h.2.1],
 end
 
-lemma weierstrass_equation.disc_of_singular_model {K : Type*} [field K]
+@[simp]
+lemma disc_of_singular_model {K : Type*} [comm_ring K]
 (E : weierstrass_equation K) (h : E.is_singular_model) :
 E.disc = 0 :=
 begin
-  unfold weierstrass_equation.disc
-  weierstrass_equation.b2
-  weierstrass_equation.b4
-  weierstrass_equation.b6
-  weierstrass_equation.b8,
-  rw [h.1, h.2.1, h.2.2],
-  ring,
+  simp [disc, b2, b4, b6, b8, h.1, h.2.1, h.2.2],
 end
 
-lemma weierstrass_equation.has_singular_model
+lemma has_singular_model
 {K : Type*} [field K] (E : weierstrass_equation K)
 (P : affine_plane_point K) (hP : E.affine_point_singular P) :
 ∃ C : linear_change_of_variable K, (C.change_curve E).is_singular_model
-∧ (C.change_affine_point P) = affine_plane_point.mk 0 0 :=
+∧ (C.change_affine_point P) = ⟨ 0, 0 ⟩ :=
 begin
-  let C : linear_change_of_variable K := linear_change_of_variable.mk 1 P.x 0 P.y (by simp),
+  let C : linear_change_of_variable K := ⟨ 1, P.x, 0, P.y, by simp ⟩,
   use C,
-  rw E.change_curve_preserve_affine_singular_point C at hP,
-  set E' : weierstrass_equation K := C.change_curve E,
-  set P' := C.change_affine_point P with hP',
-  unfold linear_change_of_variable.change_affine_point at hP',
-  simp at hP',
+  rw C.preserve_affine_singular_point E at hP,
+  set E' := C.change_curve E with hE', clear_value E',
+  set P' := C.change_affine_point P with hP', clear_value P',
+  simp [linear_change_of_variable.change_affine_point] at hP',
   split, {
-    rw affine_plane_point.ext_iff at hP',
-    unfold affine_plane_point.x
-    affine_plane_point.y at hP',
-    unfold weierstrass_equation.affine_point_singular
-    weierstrass_equation.affine_point_on_curve
-    weierstrass_equation.eval_at_affine_point
-    weierstrass_equation.eval_dx_at_affine_point
-    weierstrass_equation.eval_dy_at_affine_point at hP,
-    rw [hP'.1, hP'.2] at hP,
-    simp [zero_pow] at hP,
+    simp [affine_plane_point.ext_iff] at hP',
+    simp [affine_point_singular,
+      affine_point_on_curve,
+      eval_at_affine_point,
+      eval_dx_at_affine_point,
+      eval_dy_at_affine_point,
+      hP'.1, hP'.2, zero_pow] at hP,
     exact ⟨ hP.2.2, hP.2.1, hP.1 ⟩,
   },
   exact hP',
 end
 
-lemma weierstrass_equation.disc_non_zero_implies_non_singular
+/--
+If a Weierstrass equation has non-zero discriminant,
+then it does not have rational singular point.
+-/
+lemma disc_non_zero_implies_non_singular
 {K : Type*} [field K] (E : weierstrass_equation K) :
 E.non_singular' → E.non_singular :=
 begin
@@ -77,89 +72,75 @@ begin
   rintros ⟨ P, hP ⟩,
   rcases E.has_singular_model P hP with ⟨ C, h2, h3 ⟩,
   rw C.preserve_non_singular',
-  set E' : weierstrass_equation K := C.change_curve E,
-  intro h1,
-  exact h1 (E'.disc_of_singular_model h2),
+  set E' : weierstrass_equation K := C.change_curve E, clear_value E',
+  simp [non_singular', h2],
 end
 
-lemma weierstrass_equation.non_singular_implies_disc_non_zero
+lemma non_singular_implies_disc_non_zero.char_2_case
 {K : Type*} [field K] (E : weierstrass_equation K)
-(hperfect : (ring_char K = 2 ∨ ring_char K = 3) ∧ E.c4 = 0 → my_perfect_field K):
+(hperfect : (ring_char K = 2 ∨ ring_char K = 3) ∧ E.c4 = 0 → my_perfect_field K)
+(hchar2 : ring_char K = 2) :
 E.non_singular → E.non_singular' :=
 begin
-  by_cases hchar2 : ring_char K = 2, {
-    rcases E.have_model_of_char_2 hchar2 with ⟨ hj, C, ha1, ha3, ha4 ⟩ | ⟨ hj, C, ha1, ha2 ⟩, {
-      rw C.preserve_non_singular E,
-      rw C.preserve_non_singular' E,
-      rw weierstrass_equation.non_singular_iff_affine_non_singular,
-      set E' := C.change_curve E with hE,
-      intros hsmooth hdisc,
-      rw E'.disc_of_model_of_char_2_j_non_zero ⟨ ha1, ha3, ha4 ⟩ hchar2 at hdisc,
-      let P : affine_plane_point K := affine_plane_point.mk 0 0,
-      have hP : E'.affine_point_on_curve P := by {
-        unfold weierstrass_equation.affine_point_on_curve
-        weierstrass_equation.eval_at_affine_point
-        affine_plane_point.x
-        affine_plane_point.y,
-        rw [ha1, ha3, ha4, hdisc],
-        simp [zero_pow],
-      },
-      replace hsmooth := (hsmooth P hP).2,
-      unfold weierstrass_equation.eval_dx_at_affine_point
-      weierstrass_equation.eval_dy_at_affine_point
-      affine_plane_point.x
-      affine_plane_point.y at hsmooth,
-      rw [ha1, ha3, ha4] at hsmooth,
-      simp [zero_pow] at hsmooth,
-      exact hsmooth,
-    }, {
-      replace hperfect : nth_power_surjective K 2 := by {
-        have hc4 := (C.change_curve E).c4_of_model_of_char_2_j_zero ⟨ ha1, ha2 ⟩ hchar2,
-        rw C.c4 E at hc4,
-        field_simp [C.hu] at hc4,
-        have h := hperfect ⟨ (by { left, exact hchar2, }), hc4 ⟩,
-        unfold my_perfect_field at h,
-        rw hchar2 at h,
-        cases h with h h, { contradiction, },
-        exact h,
-      },
-      rw C.preserve_non_singular E,
-      rw C.preserve_non_singular' E,
-      rw weierstrass_equation.non_singular_iff_affine_non_singular,
-      set E' := C.change_curve E with hE,
-      intros hsmooth hdisc,
-      rw E'.disc_of_model_of_char_2_j_zero ⟨ ha1, ha2 ⟩ hchar2 at hdisc,
-      field_simp at hdisc,
-      cases hperfect E'.a4 with x hx,
-      cases hperfect (x^3+E'.a4*x+E'.a6) with y hy,
-      let P := affine_plane_point.mk x y,
-      have hP : E'.affine_point_on_curve P := by {
-        unfold weierstrass_equation.affine_point_on_curve
-        weierstrass_equation.eval_at_affine_point
-        affine_plane_point.x
-        affine_plane_point.y,
-        rw [ha1, ha2, hdisc, hy],
-        ring,
-      },
-      replace hsmooth := (hsmooth P hP).2,
-      unfold weierstrass_equation.eval_dx_at_affine_point
-      weierstrass_equation.eval_dy_at_affine_point
-      affine_plane_point.x
-      affine_plane_point.y at hsmooth,
-      rw [ha1, ha2, hdisc, hx] at hsmooth,
-      have h := cong_char_is_eq hchar2 3 (-1) (by norm_num), norm_cast at h, rw h at hsmooth, clear h,
-      have h := dvd_char_is_zero hchar2 2 (by norm_num), norm_cast at h, rw h at hsmooth, clear h,
-      simp at hsmooth,
-      exact hsmooth,
+  rcases E.have_model_of_char_2 hchar2 with ⟨ hj, C, ha1, ha3, ha4 ⟩ | ⟨ hj, C, ha1, ha2 ⟩, {
+    rw [C.preserve_non_singular E, C.preserve_non_singular' E,
+      non_singular_iff_affine_non_singular],
+    set E' := C.change_curve E with hE, clear_value E',
+    intros hsmooth hdisc,
+    rw E'.disc_of_model_of_char_2_j_non_zero ⟨ ha1, ha3, ha4 ⟩ hchar2 at hdisc,
+    let P : affine_plane_point K := ⟨ 0, 0 ⟩,
+    have hP : E'.affine_point_on_curve P := by {
+      simp [affine_point_on_curve,
+        eval_at_affine_point,
+        ha1, ha3, ha4, hdisc],
     },
+    replace hsmooth := (hsmooth P hP).2,
+    simp [eval_dx_at_affine_point,
+      eval_dy_at_affine_point,
+      ha1, ha3, ha4] at hsmooth,
+    exact hsmooth,
+  }, {
+    replace hperfect : nth_power_surjective K 2 := by {
+      have hc4 := (C.change_curve E).c4_of_model_of_char_2_j_zero ⟨ ha1, ha2 ⟩ hchar2,
+      simp at hc4,
+      simp [hchar2, hc4, my_perfect_field] at hperfect,
+      exact hperfect,
+    },
+    rw [C.preserve_non_singular E, C.preserve_non_singular' E,
+      non_singular_iff_affine_non_singular],
+    set E' := C.change_curve E with hE, clear_value E',
+    intros hsmooth hdisc,
+    simp [E'.disc_of_model_of_char_2_j_zero ⟨ ha1, ha2 ⟩ hchar2] at hdisc,
+    cases hperfect E'.a4 with x hx,
+    cases hperfect (x^3+E'.a4*x+E'.a6) with y hy,
+    have hP : E'.affine_point_on_curve ⟨ x, y ⟩ := by {
+      simp [affine_point_on_curve,
+        eval_at_affine_point,
+        ha1, ha2, hdisc, hy],
+      ring,
+    },
+    replace hsmooth := (hsmooth _ hP).2,
+    simp [eval_dx_at_affine_point,
+      eval_dy_at_affine_point,
+      ha1, ha2, hdisc, hx] at hsmooth,
+    ring_nf at hsmooth,
+    ring_char2 at hsmooth,
+    exact hsmooth,
   },
+end
+
+lemma non_singular_implies_disc_non_zero.char_neq_2_case
+{K : Type*} [field K] (E : weierstrass_equation K)
+(hperfect : (ring_char K = 2 ∨ ring_char K = 3) ∧ E.c4 = 0 → my_perfect_field K)
+(hchar2 : ring_char K ≠ 2) :
+E.non_singular → E.non_singular' :=
+begin
   rcases E.have_model_of_char_neq_2 hchar2 with ⟨ C, ha1, ha3 ⟩,
-  rw C.preserve_non_singular E,
-  rw C.preserve_non_singular' E,
-  rw weierstrass_equation.non_singular_iff_affine_non_singular,
-  set E' := C.change_curve E with hE,
+  rw [C.preserve_non_singular E, C.preserve_non_singular' E,
+    non_singular_iff_affine_non_singular],
+  set E' := C.change_curve E with hE, clear_value E',
   intros hsmooth hdisc,
-  let f : monic_cubic_poly K := monic_cubic_poly.mk E'.a2 E'.a4 E'.a6,
+  let f : monic_cubic_poly K := ⟨ E'.a2, E'.a4, E'.a6 ⟩,
   have hdisc' : E'.disc = 16*f.disc := by {
     rw E'.disc_of_model_of_char_neq_2 ⟨ ha1, ha3 ⟩,
     unfold monic_cubic_poly.disc,
@@ -167,80 +148,86 @@ begin
   },
   have h16 := power_of_prime_neq_char_is_non_zero K 16 2 4 (by norm_num) (by norm_num) hchar2,
   norm_num at h16,
-  field_simp [hdisc, h16] at hdisc',
+  simp [hdisc, h16] at hdisc',
   replace hperfect : ring_char K = 2 ∨ (ring_char K = 3 ∧ f.a = 0) → my_perfect_field K := by {
     by_cases hchar3 : ring_char K = 3, {
       intro h,
-      simp [hchar2, hchar3] at h, norm_num at h,
+      simp [hchar2, hchar3] at h,
       replace h : E'.c4 = 0 := by {
-        rw E'.c4_of_model_of_char_neq_2 ⟨ ha1, ha3 ⟩,
-        rw h,
-        have h := dvd_char_is_zero hchar3 48 (by norm_num), norm_cast at h, rw h, clear h,
-        ring,
+        rw [E'.c4_of_model_of_char_neq_2 ⟨ ha1, ha3 ⟩, h],
+        ring_char3,
       },
-      rw C.c4 E at h,
-      field_simp [C.hu] at h,
-      exact hperfect ⟨ (by { right, exact hchar3, }), h ⟩,
+      simp [hE] at h,
+      simp [hchar3, h] at hperfect,
+      exact hperfect,
     },
     simp [hchar2, hchar3],
   },
   rcases f.disc_zero_implies_has_multiple_root hperfect hdisc' with ⟨ x, h1, h2 ⟩,
-  unfold monic_cubic_poly.eval_at
-  monic_cubic_poly.a
-  monic_cubic_poly.b
-  monic_cubic_poly.c at h1,
-  replace h1 := calc x^3 = -E'.a2*x^2 - E'.a4*x - E'.a6 + (x^3 + E'.a2*x^2 + E'.a4*x + E'.a6) : by ring
-  ... = -E'.a2*x^2 - E'.a4*x - E'.a6 : by { rw h1, ring, },
-  unfold monic_cubic_poly.eval_dx_at
-  monic_cubic_poly.a
-  monic_cubic_poly.b at h2,
-  replace h2 := calc 3*x^2 = -2*E'.a2*x - E'.a4 + (3*x^2 + 2*E'.a2*x + E'.a4) : by ring
-  ... = -2*E'.a2*x - E'.a4 : by { rw h2, ring, },
+  replace h1 := calc x^3
+  = -E'.a2*x^2 - E'.a4*x - E'.a6 + f.eval_at x : by { simp [monic_cubic_poly.eval_at], }
+  ... = -E'.a2*x^2 - E'.a4*x - E'.a6 : by { simp [h1], },
+  replace h2 := calc 3*x^2 = -2*E'.a2*x - E'.a4 + f.eval_dx_at x : by { simp [monic_cubic_poly.eval_dx_at], }
+  ... = -2*E'.a2*x - E'.a4 : by { simp [h2], },
   let P := affine_plane_point.mk x 0,
   have hP : E'.affine_point_on_curve P := by {
-    unfold weierstrass_equation.affine_point_on_curve
-    weierstrass_equation.eval_at_affine_point
-    affine_plane_point.x
-    affine_plane_point.y,
-    rw [h1, ha1, ha3], ring,
+    simp [affine_point_on_curve,
+      eval_at_affine_point,
+      h1, ha1, ha3], ring,
   },
   replace hsmooth := (hsmooth P hP).2,
-  unfold weierstrass_equation.eval_dx_at_affine_point
-  weierstrass_equation.eval_dy_at_affine_point
-  affine_plane_point.x
-  affine_plane_point.y at hsmooth,
-  rw [h2, ha1, ha3] at hsmooth,
-  simp at hsmooth,
+  simp [eval_dx_at_affine_point,
+    eval_dy_at_affine_point,
+    h2, ha1, ha3] at hsmooth,
   exact hsmooth,
 end
 
-lemma weierstrass_equation.at_most_one_singular_point
+/--
+If a Weierstrass equation has no rational singular point,
+under the assumption that the field is not of characteristic 2 or 3, or is perfect,
+the Weierstrass equation is of non-zero discriminant.
+
+NOTE: When the field is of characteristic 2 or 3, the singular point
+may be defined over a finite inseparable extension.
+-/
+lemma non_singular_implies_disc_non_zero
+{K : Type*} [field K] (E : weierstrass_equation K)
+(hperfect : (ring_char K = 2 ∨ ring_char K = 3) ∧ E.c4 = 0 → my_perfect_field K) :
+E.non_singular → E.non_singular' :=
+begin
+  by_cases hchar2 : ring_char K = 2, {
+    exact non_singular_implies_disc_non_zero.char_2_case E hperfect hchar2,
+  },
+  exact non_singular_implies_disc_non_zero.char_neq_2_case E hperfect hchar2,
+end
+
+/--
+A Weierstrass equation has at most one singular point.
+-/
+lemma at_most_one_singular_point
 {K : Type*} [field K] (E : weierstrass_equation K) (P P' : affine_plane_point K)
 (hP : E.affine_point_singular P) (hP' : E.affine_point_singular P') : P = P' :=
 begin
   rcases E.has_singular_model P hP with ⟨ C, hsing, h0 ⟩,
   rw ← linear_change_of_variable.change_affine_point.id P,
   rw ← linear_change_of_variable.change_affine_point.id P',
-  rw ← C.comp_inv,
+  rw ← C.inv_comp,
   repeat { rw ← linear_change_of_variable.change_affine_point.comp },
-  rw E.change_curve_preserve_affine_singular_point C _ at hP hP',
-  set Q := C.change_affine_point P,
-  set Q' := C.change_affine_point P',
-  set E' := C.change_curve E,
+  rw C.preserve_affine_singular_point E _ at hP hP',
+  set Q := C.change_affine_point P, clear_value Q,
+  set Q' := C.change_affine_point P', clear_value Q',
+  set E' := C.change_curve E, clear_value E',
   congr,
-  rw [h0, affine_plane_point.ext_iff],
-  unfold affine_plane_point.x affine_plane_point.y,
-  unfold weierstrass_equation.affine_point_singular
-  weierstrass_equation.affine_point_on_curve
-  weierstrass_equation.eval_at_affine_point
-  weierstrass_equation.eval_dx_at_affine_point
-  weierstrass_equation.eval_dy_at_affine_point at hP',
-  rw [hsing.1, hsing.2.1, hsing.2.2] at hP',
-  simp at hP',
+  simp [h0, affine_plane_point.ext_iff],
+  simp [affine_point_singular,
+    affine_point_on_curve,
+    eval_at_affine_point,
+    eval_dx_at_affine_point,
+    eval_dy_at_affine_point,
+    hsing.1, hsing.2.1, hsing.2.2] at hP',
   rcases hP' with ⟨ h1, h2, h3 ⟩,
   by_cases hx : Q'.x = 0, {
-    rw hx at h1,
-    field_simp [zero_pow] at h1,
+    simp [hx, zero_pow] at h1,
     exact ⟨ hx.symm, h1.symm ⟩,
   },
   exfalso,
@@ -249,30 +236,28 @@ begin
   - 2 * Q'.x * (E'.a1 * Q'.y - 3 * Q'.x ^ 2 - 2 * E'.a2 * Q'.x)
   - 3 * Q'.y * (2 * Q'.y + E'.a1 * Q'.x) : by ring
   ... = 0 : by { rw [h1, h2, h3], ring, },
-  field_simp [hx] at h4,
+  simp [hx] at h4,
   have hchar3 := calc 3 * Q'.x ^ 2 = (E'.a1 * Q'.y - 2 * E'.a2 * Q'.x)
   - (E'.a1 * Q'.y - 3 * Q'.x ^ 2 - 2 * E'.a2 * Q'.x) : by ring
   ... = 0 : by { rw [h2, h4], ring, },
-  field_simp [hx] at hchar3,
-  replace h3 := calc Q'.y = Q'.y + (2 * Q'.y + E'.a1 * Q'.x) : by { rw h3, ring, }
-  ... = E'.a1 * Q'.x : by { ring, rw hchar3, ring, },
-  rw h3 at h4, ring at h4,
-  replace h4 := calc Q'.x * (E'.a1 ^ 2 + (1 - 3) * E'.a2) = Q'.x * E'.a1 ^ 2 - 2 * E'.a2 * Q'.x : by ring
+  simp [hx] at hchar3,
+  replace h3 := calc Q'.y = Q'.y + (2 * Q'.y + E'.a1 * Q'.x) : by { simp [h3], }
+  ... = E'.a1 * Q'.x : by { ring_nf, simp [hchar3], },
+  replace h4 := calc Q'.x * (E'.a1 ^ 2 + (1 - 3) * E'.a2)
+  = E'.a1 * Q'.y - 2 * E'.a2 * Q'.x : by { rw h3, ring, }
   ... = 0 : h4,
-  rw hchar3 at h4,
-  field_simp [hx] at h4,
+  simp [hchar3, hx] at h4,
   replace h4 := calc E'.a2 = -E'.a1 ^ 2 + (E'.a1 ^ 2 + E'.a2) : by ring
   ... = -E'.a1 ^ 2 : by { rw h4, ring, },
   rw [h3, h4] at h1,
   replace h1 := calc (3 * E'.a1^2 - Q'.x) * Q'.x ^ 2
   = (E'.a1 * Q'.x) ^ 2 + E'.a1 * Q'.x * (E'.a1 * Q'.x) - Q'.x ^ 3 - -E'.a1 ^ 2 * Q'.x ^ 2 : by ring
   ... = 0 : h1,
-  rw hchar3 at h1,
-  field_simp [hx] at h1,
+  simp [hchar3, hx] at h1,
   exact h1,
 end
 
-lemma weierstrass_equation.singular_implies_has_node_or_cusp
+lemma singular_implies_has_node_or_cusp
 {K : Type*} [field K] (E : weierstrass_equation K) :
 ¬ E.non_singular → (¬ E.has_node ↔ E.has_cusp) :=
 begin
@@ -281,7 +266,7 @@ begin
   have hP' := E.singular_point_is_node_or_cusp P hP,
   split, {
     intro h,
-    unfold weierstrass_equation.has_node at h,
+    unfold has_node at h,
     push_neg at h,
     replace hP' := hP'.1 (h P),
     exact ⟨ P, hP' ⟩,
@@ -294,71 +279,67 @@ begin
   finish,
 end
 
-lemma weierstrass_equation.has_node_implies_disc_zero_c4_non_zero
+/--
+If a Weierstrass equation has a rational node,
+then its discriminant is zero and `c4` is not zero.
+-/
+lemma has_node_implies_disc_zero_c4_non_zero
 {K : Type*} [field K] (E : weierstrass_equation K) :
 E.has_node → E.has_node' :=
 begin
   rintros ⟨ P, hP, hH ⟩,
   rcases E.has_singular_model P hP with ⟨ C, h2, h3 ⟩,
   replace hH : (E.eval_hessian_at_affine_point P)/C.u^2 ≠ 0 := by {
-    field_simp [C.hu, hH],
+    field_simp [hH],
   },
   rw ← C.eval_hessian_at_affine_point E P at hH,
   rw C.preserve_has_node' E,
-  rw E.change_curve_preserve_affine_singular_point C P at hP,
-  set E' := C.change_curve E,
-  set P' := C.change_affine_point P,
+  rw C.preserve_affine_singular_point E P at hP,
+  set E' := C.change_curve E, clear_value E',
+  set P' := C.change_affine_point P, clear_value P',
   have h := mt E'.disc_non_zero_implies_non_singular,
   rw E'.singular_iff_has_affine_singular_point at h,
   replace h := h ⟨ P', hP ⟩,
-  unfold weierstrass_equation.non_singular' at h,
-  simp at h,
+  simp [non_singular'] at h,
   use h,
-  unfold weierstrass_equation.eval_hessian_at_affine_point at hH,
-  rw affine_plane_point.ext_iff at h3,
-  unfold affine_plane_point.x
-  affine_plane_point.y at h3,
-  rw h3.1 at hH,
-  field_simp at hH,
-  unfold weierstrass_equation.c4
-  weierstrass_equation.b4,
-  rw [h2.1, h2.2.1],
-  field_simp [hH],
+  simp [affine_plane_point.ext_iff] at h3,
+  simp [eval_hessian_at_affine_point, h3.1] at hH,
+  simp [c4, b4, h2.1, h2.2.1, hH],
 end
 
-lemma weierstrass_equation.has_cusp_implies_disc_zero_c4_zero
+/--
+If a Weierstrass equation has a rational cusp,
+then its discriminant is zero and `c4` is also zero.
+-/
+lemma has_cusp_implies_disc_zero_c4_zero
 {K : Type*} [field K] (E : weierstrass_equation K) :
 E.has_cusp → E.has_cusp' :=
 begin
   rintros ⟨ P, hP, hH ⟩,
   rcases E.has_singular_model P hP with ⟨ C, h2, h3 ⟩,
   replace hH : (E.eval_hessian_at_affine_point P)/C.u^2 = 0 := by {
-    rw hH, ring,
+    field_simp [hH],
   },
   rw ← C.eval_hessian_at_affine_point E P at hH,
   rw C.preserve_has_cusp' E,
-  rw E.change_curve_preserve_affine_singular_point C P at hP,
-  set E' := C.change_curve E,
-  set P' := C.change_affine_point P,
+  rw C.preserve_affine_singular_point E P at hP,
+  set E' := C.change_curve E, clear_value E',
+  set P' := C.change_affine_point P, clear_value P',
   have h := mt E'.disc_non_zero_implies_non_singular,
   rw E'.singular_iff_has_affine_singular_point at h,
   replace h := h ⟨ P', hP ⟩,
-  unfold weierstrass_equation.non_singular' at h,
-  simp at h,
+  simp [non_singular'] at h,
   use h,
-  unfold weierstrass_equation.eval_hessian_at_affine_point at hH,
-  rw affine_plane_point.ext_iff at h3,
-  unfold affine_plane_point.x
-  affine_plane_point.y at h3,
-  rw h3.1 at hH,
-  field_simp at hH,
-  unfold weierstrass_equation.c4
-  weierstrass_equation.b4,
-  rw [h2.1, h2.2.1, hH],
-  ring,
+  simp [affine_plane_point.ext_iff] at h3,
+  simp [eval_hessian_at_affine_point, h3.1] at hH,
+  simp [c4, b4, h2.1, h2.2.1, hH],
 end
 
-lemma weierstrass_equation.disc_zero_c4_non_zero_implies_has_node
+/--
+If a Weierstrass is of discriminant zero and `c4` non-zero,
+then it has a rational node.
+-/
+lemma disc_zero_c4_non_zero_implies_has_node
 {K : Type*} [field K] (E : weierstrass_equation K) :
 E.has_node' → E.has_node :=
 begin
@@ -368,30 +349,28 @@ begin
   },
   have hsing := mt (E.non_singular_implies_disc_non_zero hperfect),
   rw E.singular_iff_has_affine_singular_point at hsing,
-  unfold weierstrass_equation.non_singular' at hsing,
-  simp at hsing,
-  rcases hsing hdisc with ⟨ P, hP ⟩,
+  simp [non_singular', hdisc] at hsing,
+  rcases hsing with ⟨ P, hP ⟩,
   rcases E.has_singular_model P hP with ⟨ C, h2, h3 ⟩,
   rw C.preserve_has_node E,
-  rw E.change_curve_preserve_affine_singular_point C P at hP,
-  set E' := C.change_curve E,
-  set P' := C.change_affine_point P,
+  rw C.preserve_affine_singular_point E P at hP,
+  set E' := C.change_curve E with hE', clear_value E',
+  set P' := C.change_affine_point P with hP', clear_value P',
   replace hc4 : E'.c4 ≠ 0 := by {
-    rw C.c4 E, field_simp [hc4, C.hu],
+    simp [hE', hc4],
   },
-  rw E'.c4_of_singular_model h2 at hc4,
-  field_simp at hc4,
-  rw affine_plane_point.ext_iff at h3,
-  unfold affine_plane_point.x
-  affine_plane_point.y at h3,
+  simp [h2] at hc4,
+  simp [affine_plane_point.ext_iff] at h3,
   use [P', hP],
-  unfold weierstrass_equation.eval_hessian_at_affine_point
-  affine_plane_point.x,
-  rw h3.1,
-  field_simp [hc4],
+  simp [eval_hessian_at_affine_point, h3.1, hc4],
 end
 
-lemma weierstrass_equation.disc_zero_c4_zero_implies_has_cusp
+/--
+If a Weierstrass is of discriminant zero and `c4` zero,
+under the assumption that the field is not of characteristic 2 or 3, or is perfect,
+it has a rational cusp.
+-/
+lemma disc_zero_c4_zero_implies_has_cusp
 {K : Type*} [field K] (E : weierstrass_equation K)
 (hperfect : ring_char K = 2 ∨ ring_char K = 3 → my_perfect_field K):
 E.has_cusp' → E.has_cusp :=
@@ -403,24 +382,20 @@ begin
   },
   have hsing := mt (E.non_singular_implies_disc_non_zero hperfect),
   rw E.singular_iff_has_affine_singular_point at hsing,
-  unfold weierstrass_equation.non_singular' at hsing,
-  simp at hsing,
-  rcases hsing hdisc with ⟨ P, hP ⟩,
+  simp [non_singular', hdisc] at hsing,
+  rcases hsing with ⟨ P, hP ⟩,
   rcases E.has_singular_model P hP with ⟨ C, h2, h3 ⟩,
   rw C.preserve_has_cusp E,
-  rw E.change_curve_preserve_affine_singular_point C P at hP,
-  set E' := C.change_curve E,
-  set P' := C.change_affine_point P,
+  rw C.preserve_affine_singular_point E P at hP,
+  set E' := C.change_curve E with hE', clear_value E',
+  set P' := C.change_affine_point P with hP', clear_value P',
   replace hc4 : E'.c4 = 0 := by {
-    rw [C.c4 E, hc4], ring,
+    simp [hE', hc4],
   },
-  rw E'.c4_of_singular_model h2 at hc4,
-  field_simp at hc4,
-  rw affine_plane_point.ext_iff at h3,
-  unfold affine_plane_point.x
-  affine_plane_point.y at h3,
+  simp [h2] at hc4,
+  simp [affine_plane_point.ext_iff] at h3,
   use [P', hP],
-  unfold weierstrass_equation.eval_hessian_at_affine_point
-  affine_plane_point.x,
-  rw [h3.1, hc4], ring,
+  simp [eval_hessian_at_affine_point, h3.1, hc4],
 end
+
+end weierstrass_equation
