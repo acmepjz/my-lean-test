@@ -4,3 +4,4 @@ import gtm106.weierstrass_equation.linear_change_of_variable
 import gtm106.weierstrass_equation.models_by_characteristic
 import gtm106.weierstrass_equation.non_singular_criterion
 import gtm106.weierstrass_equation.j_invariant
+import gtm106.weierstrass_equation.group_law
