@@ -43,26 +43,6 @@ begin
   simp [affine_point_on_curve],
 end
 
-def affine_point.neg
-{K : Type*} [comm_ring K] {E : weierstrass_equation K}
-: affine_point E → affine_point E
-| affine_point.infinite := affine_point.infinite
-| (affine_point.finite P h) := affine_point.finite (E.neg_of_affine_plane_point P)
-  ((affine_point_on_curve.neg E P).2 h)
-
-@[simp]
-lemma affine_point.neg_of_neg
-{K : Type*} [comm_ring K] {E : weierstrass_equation K}
-(P : affine_point E) : P.neg.neg = P :=
-match P with
-| affine_point.infinite := by {
-  simp [affine_point.neg],
-}
-| (affine_point.finite P h) := by {
-  simp [affine_point.neg],
-}
-end
-
 lemma same_x_implies_same_or_neg
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P1 P2 : affine_plane_point K)
@@ -228,17 +208,39 @@ begin
   sorry,
 end
 
-noncomputable def affine_point.neg_of_add
+namespace affine_point
+
+def neg
+{K : Type*} [comm_ring K] {E : weierstrass_equation K}
+: affine_point E → affine_point E
+| infinite := infinite
+| (finite P h) := finite (E.neg_of_affine_plane_point P)
+  ((affine_point_on_curve.neg E P).2 h)
+
+@[simp]
+lemma neg_of_neg
+{K : Type*} [comm_ring K] {E : weierstrass_equation K}
+(P : affine_point E) : P.neg.neg = P :=
+match P with
+| infinite := by {
+  simp [neg],
+}
+| (finite P h) := by {
+  simp [neg],
+}
+end
+
+noncomputable def neg_of_add
 {K : Type*} [field K] {E : weierstrass_equation K}
 : affine_point E → affine_point E → affine_point E
-| affine_point.infinite P := P.neg
-| P affine_point.infinite := P.neg
-| (affine_point.finite P1 h1) (affine_point.finite P2 h2) := by {
+| infinite P := P.neg
+| P infinite := P.neg
+| (finite P1 h1) (finite P2 h2) := by {
   by_cases hx : P1.x - P2.x = 0, {
     by_cases hy : P1.y + P2.y + E.a1*P1.x + E.a3 = 0, {
-      exact affine_point.infinite,
+      exact infinite,
     },
-    exact affine_point.finite (E.neg_of_double_of_affine_plane_point P1)
+    exact finite (E.neg_of_double_of_affine_plane_point P1)
       (affine_point_on_curve.neg_of_double E P1 h1 (by {
         have h := same_x_implies_same_or_neg P1 P2 h1 h2 hx,
         simp [hy, sub_eq_zero] at h,
@@ -246,26 +248,26 @@ noncomputable def affine_point.neg_of_add
         exact hy,
       })),
   },
-  exact affine_point.finite (E.neg_of_add_of_affine_plane_point P1 P2)
+  exact finite (E.neg_of_add_of_affine_plane_point P1 P2)
     (affine_point_on_curve.neg_of_add E P1 P2 h1 h2 hx),
 }
 
-lemma affine_point.neg_of_add.comm
+lemma neg_of_add.comm
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P1 P2 : affine_point E)
 : P1.neg_of_add P2 = P2.neg_of_add P1 :=
 match P1, P2 with
-| affine_point.infinite, affine_point.infinite := by {
-  simp [affine_point.neg_of_add],
+| infinite, infinite := by {
+  simp [neg_of_add],
 }
-| affine_point.infinite, (affine_point.finite P2 h2) := by {
-  simp [affine_point.neg_of_add],
+| infinite, (finite P2 h2) := by {
+  simp [neg_of_add],
 }
-| (affine_point.finite P1 h1), affine_point.infinite := by {
-  simp [affine_point.neg_of_add],
+| (finite P1 h1), infinite := by {
+  simp [neg_of_add],
 }
-| (affine_point.finite P1 h1), (affine_point.finite P2 h2) := by {
-  simp [affine_point.neg_of_add],
+| (finite P1 h1), (finite P2 h2) := by {
+  simp [neg_of_add],
   by_cases hx : P1.x - P2.x = 0, {
     have hx' := sub_eq_zero.2 (sub_eq_zero.1 hx).symm,
     simp [hx, hx'],
@@ -291,98 +293,100 @@ end
 -- (P1, P2) ↦ P1 + P2
 -- ================
 
-noncomputable def affine_point.add
+noncomputable def add
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P1 P2 : affine_point E) : affine_point E
 := (P1.neg_of_add P2).neg
 
-lemma affine_point.add.comm
+lemma add.comm
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P1 P2 : affine_point E)
 : P1.add P2 = P2.add P1 :=
 begin
-  unfold affine_point.add,
+  unfold add,
   congr' 1,
-  exact affine_point.neg_of_add.comm P1 P2,
+  exact neg_of_add.comm P1 P2,
 end
 
-lemma affine_point.add.zero_add
+lemma add.zero_add
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P : affine_point E)
-: affine_point.infinite.add P = P :=
+: infinite.add P = P :=
 match P with
-| affine_point.infinite := by {
-  simp [affine_point.add, affine_point.neg_of_add],
+| infinite := by {
+  simp [add, neg_of_add],
 }
-| (affine_point.finite P h) := by {
-  simp [affine_point.add, affine_point.neg_of_add],
-}
-end
-
-lemma affine_point.add.add_zero
-{K : Type*} [field K] {E : weierstrass_equation K}
-(P : affine_point E)
-: P.add affine_point.infinite = P :=
-match P with
-| affine_point.infinite := by {
-  simp [affine_point.add, affine_point.neg_of_add],
-}
-| (affine_point.finite P h) := by {
-  simp [affine_point.add, affine_point.neg_of_add],
+| (finite P h) := by {
+  simp [add, neg_of_add],
 }
 end
 
-lemma affine_point.add.add_left_neg
+lemma add.add_zero
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P : affine_point E)
-: P.neg.add P = affine_point.infinite :=
+: P.add infinite = P :=
 match P with
-| affine_point.infinite := by {
-  simp [affine_point.add, affine_point.neg_of_add, affine_point.neg],
+| infinite := by {
+  simp [add, neg_of_add],
 }
-| (affine_point.finite P h) := by {
-  simp [affine_point.add, affine_point.neg_of_add, affine_point.neg,
+| (finite P h) := by {
+  simp [add, neg_of_add],
+}
+end
+
+lemma add.add_left_neg
+{K : Type*} [field K] {E : weierstrass_equation K}
+(P : affine_point E)
+: P.neg.add P = infinite :=
+match P with
+| infinite := by {
+  simp [add, neg_of_add, neg],
+}
+| (finite P h) := by {
+  simp [add, neg_of_add, neg,
     neg_of_affine_plane_point],
   dsimp only,
   have h : -P.y - E.a1 * P.x - E.a3 + P.y + E.a1 * P.x + E.a3 = 0 := by ring,
-  simp [h, affine_point.neg],
+  simp [h, neg],
 }
 end
 
-lemma affine_point.add.add_right_neg
+lemma add.add_right_neg
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P : affine_point E)
-: P.add P.neg = affine_point.infinite :=
+: P.add P.neg = infinite :=
 match P with
-| affine_point.infinite := by {
-  simp [affine_point.add, affine_point.neg_of_add, affine_point.neg],
+| infinite := by {
+  simp [add, neg_of_add, neg],
 }
-| (affine_point.finite P h) := by {
-  simp [affine_point.add, affine_point.neg_of_add, affine_point.neg,
+| (finite P h) := by {
+  simp [add, neg_of_add, neg,
     neg_of_affine_plane_point],
   dsimp only,
   have h : P.y + (-P.y - E.a1 * P.x - E.a3) + E.a1 * P.x + E.a3 = 0 := by ring,
-  simp [h, affine_point.neg],
+  simp [h, neg],
 }
 end
 
-lemma affine_point.add.assoc
+lemma add.assoc
 {K : Type*} [field K] {E : weierstrass_equation K}
 (P1 P2 P3 : affine_point E)
 : (P1.add P2).add P3 = P1.add (P2.add P3) :=
 begin
-  unfold affine_point.add,
+  unfold add,
   congr' 1,
   sorry,
 end
 
-noncomputable instance affine_point.to_add_comm_group
+noncomputable instance to_add_comm_group
 {K : Type*} [field K] (E : weierstrass_equation K)
 : add_comm_group (affine_point E)
-:= ⟨ affine_point.add, affine_point.add.assoc, affine_point.infinite,
-  affine_point.add.zero_add, affine_point.add.add_zero, affine_point.neg,
+:= ⟨ add, add.assoc, infinite,
+  add.zero_add, add.add_zero, neg,
   (λ P1 P2, P1.add P2.neg), by {
-    intros _ _, simp [has_add.add, add_zero_class.add],
-  }, affine_point.add.add_left_neg, affine_point.add.comm ⟩
+    intros _ _, simp only [has_add.add, add_zero_class.add],
+  }, add.add_left_neg, add.comm ⟩
+
+end affine_point
 
 end weierstrass_equation

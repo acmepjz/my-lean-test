@@ -80,7 +80,7 @@ end
 instance to_group (K : Type*) [field K] : group (linear_change_of_variable K)
 := ⟨ composite, comp_assoc, identity K, id_comp, comp_id, inverse,
   (λ C C', C.composite (C'.inverse)), by {
-    intros _ _, simp [has_mul.mul, mul_one_class.mul],
+    intros _ _, simp only [has_mul.mul, mul_one_class.mul],
   }, inv_comp ⟩
 
 -- ================
@@ -124,7 +124,7 @@ instance to_has_scalar (K : Type*) [h : field K]
 instance to_mul_action (K : Type*) [h : field K]
 : mul_action (linear_change_of_variable K) (weierstrass_equation K)
 := ⟨ @id K h, by {
-  intros _ _ _, simp [has_mul.mul, has_scalar.smul,
+  intros _ _ _, simp only [has_mul.mul, has_scalar.smul,
     mul_one_class.mul, monoid.mul, div_inv_monoid.mul, group.mul, comp],
 } ⟩
 
@@ -339,7 +339,7 @@ instance to_has_scalar (K : Type*) [h : field K]
 instance to_mul_action (K : Type*) [h : field K]
 : mul_action (linear_change_of_variable K) (affine_plane_point K)
 := ⟨ @id K h, by {
-  intros _ _ _, simp [has_mul.mul, has_scalar.smul,
+  intros _ _ _, simp only [has_mul.mul, has_scalar.smul,
     mul_one_class.mul, monoid.mul, div_inv_monoid.mul, group.mul, comp],
 } ⟩
 
@@ -402,7 +402,7 @@ instance to_has_scalar (K : Type*) [h : field K]
 instance to_mul_action (K : Type*) [h : field K]
 : mul_action (linear_change_of_variable K) (projective_plane_point K)
 := ⟨ @id K h, by {
-  intros _ _ _, simp [has_mul.mul, has_scalar.smul,
+  intros _ _ _, simp only [has_mul.mul, has_scalar.smul,
     mul_one_class.mul, monoid.mul, div_inv_monoid.mul, group.mul, comp],
 } ⟩
 
