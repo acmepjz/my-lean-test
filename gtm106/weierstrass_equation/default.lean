@@ -2,6 +2,8 @@ import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.point
 import gtm106.weierstrass_equation.linear_change_of_variable
 import gtm106.weierstrass_equation.models_by_characteristic
+import gtm106.weierstrass_equation.automorphism
 import gtm106.weierstrass_equation.non_singular_criterion
 import gtm106.weierstrass_equation.j_invariant
+import gtm106.weierstrass_equation.regular_function
 import gtm106.weierstrass_equation.group_law

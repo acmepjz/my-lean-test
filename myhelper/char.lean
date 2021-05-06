@@ -176,6 +176,8 @@ section char_specific
     s ← s.add_simp ``pow_one,
     s ← s.add_simp ``zero_mul,
     s ← s.add_simp ``mul_zero,
+    s ← s.add_simp ``zero_pow,
+    s ← s.add_simp ``one_pow,
     ns ← loc.get_locals,
     -- FIXME: add a maximal repeat time since sometimes simp will change the goal randomly
     repeat_at_most 4 (do
