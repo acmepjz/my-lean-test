@@ -88,17 +88,31 @@ end
 -- P ↦ -2*P
 -- ================
 
+namespace neg_of_double_of_affine_plane_point
+
+section
+
+parameters {K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K)
+
+def A : K := 3*P.x^2 + 2*E.a2*P.x + E.a4 - E.a1*P.y
+def B : K := -P.x^3 + E.a4*P.x + 2*E.a6 - E.a3*P.y
+def C : K := 2*P.y + E.a1*P.x + E.a3
+def x : K := (A/C)^2 + E.a1*(A/C) - E.a2 - 2*P.x
+def y : K := (A/C)*x + (B/C)
+
+end
+
+end neg_of_double_of_affine_plane_point
+
 /--
 NOTE: P should not be a 2-torsion, otherwise the result is incorrect
 -/
 def neg_of_double_of_affine_plane_point
 {K : Type*} [field K] (E : weierstrass_equation K)
 (P : affine_plane_point K) : affine_plane_point K :=
-let A := 3*P.x^2 + 2*E.a2*P.x + E.a4 - E.a1*P.y,
-  B := -P.x^3 + E.a4*P.x + 2*E.a6 - E.a3*P.y,
-  C := 2*P.y + E.a1*P.x + E.a3,
-  x' := (A/C)^2 + E.a1*(A/C) - E.a2 - 2*P.x,
-  y' := (A/C)*x' + (B/C) in ⟨ x', y' ⟩
+⟨ neg_of_double_of_affine_plane_point.x E P,
+  neg_of_double_of_affine_plane_point.y E P ⟩
 
 /-
 sorry = -2*a1^4*a2*x^3 - a1^4*x^4 + 2*a1^5*x^2*y - 2*a1^3*a2*a3*x^2 -
@@ -147,17 +161,32 @@ end
 -- (P1, P2) ↦ -(P1 + P2)
 -- ================
 
+
+namespace neg_of_add_of_affine_plane_point
+
+section
+
+parameters {K : Type*} [field K] (E : weierstrass_equation K)
+(P1 P2 : affine_plane_point K)
+
+def A : K := P1.y - P2.y
+def B : K := P2.y*P1.x - P1.y*P2.x
+def C : K := P1.x - P2.x
+def x : K := (A/C)^2 + E.a1*(A/C) - E.a2 - P1.x - P2.x
+def y : K := (A/C)*x + (B/C)
+
+end
+
+end neg_of_add_of_affine_plane_point
+
 /--
 NOTE: P1.x and P2.x should be different, otherwise the result is incorrect
 -/
 def neg_of_add_of_affine_plane_point
 {K : Type*} [field K] (E : weierstrass_equation K)
 (P1 P2 : affine_plane_point K) : affine_plane_point K :=
-let A := P1.y - P2.y,
-  B := P2.y*P1.x - P1.y*P2.x,
-  C := P1.x - P2.x,
-  x' := (A/C)^2 + E.a1*(A/C) - E.a2 - P1.x - P2.x,
-  y' := (A/C)*x' + (B/C) in ⟨ x', y' ⟩
+⟨ neg_of_add_of_affine_plane_point.x E P1 P2,
+  neg_of_add_of_affine_plane_point.y E P1 P2 ⟩
 
 lemma neg_of_add_of_affine_plane_point.comm
 {K : Type*} [field K] (E : weierstrass_equation K)
@@ -181,6 +210,9 @@ begin
     field_simp [hx, hx'],
     ring,
   },
+  unfold neg_of_add_of_affine_plane_point.y neg_of_add_of_affine_plane_point.x
+    neg_of_add_of_affine_plane_point.C neg_of_add_of_affine_plane_point.B
+    neg_of_add_of_affine_plane_point.A,
   rw [h1, h2, sub_sub _ P1.x P2.x, sub_sub _ P2.x P1.x, add_comm P1.x P2.x],
   split; refl,
 end
