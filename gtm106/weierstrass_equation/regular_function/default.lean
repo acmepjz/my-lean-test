@@ -1,0 +1,3 @@
+import gtm106.weierstrass_equation.regular_function.basic
+import gtm106.weierstrass_equation.regular_function.mv_polynomial
+import gtm106.weierstrass_equation.regular_function.equivalence
