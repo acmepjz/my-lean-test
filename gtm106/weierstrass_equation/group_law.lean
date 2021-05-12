@@ -3,6 +3,39 @@ import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.point
 import tactic
 
+lemma Vieta_formula_cubic_2 {K : Type*} [comm_ring K] {a b c x : K}
+(h : x^3 + a*x^2 + b*x + c = 0)
+(h' : 3*x^2 + 2*a*x + b = 0)
+: (-a-2*x)^3 + a*(-a-2*x)^2 + b*(-a-2*x) + c = 0 :=
+begin
+  transitivity (x^3 + a*x^2 + b*x + c) + (3*x^2 + 2*a*x + b) * (-a-3*x),
+  { rw ← sub_eq_zero, ring, },
+  have := congr (congr_arg has_add.add h) (congr_arg (λ f, f*(-a-3*x)) h'),
+  rw [zero_mul, zero_add] at this,
+  exact this,
+end
+
+lemma Vieta_formula_cubic {K : Type*} [field K] {a b c x y : K}
+(hx : x^3 + a*x^2 + b*x + c = 0)
+(hy : y^3 + a*y^2 + b*y + c = 0)
+(hneq : x ≠ y)
+: (-a-x-y)^3 + a*(-a-x-y)^2 + b*(-a-x-y) + c = 0 :=
+begin
+  have hxy : (x^2+x*y+y^2 + a*(x+y) + b) * (x - y) = 0 := by {
+    transitivity (x^3 + a*x^2 + b*x + c) - (y^3 + a*y^2 + b*y + c),
+    { rw ← sub_eq_zero, ring, },
+    have := congr (congr_arg has_sub.sub hx) hy,
+    rw sub_zero at this,
+    exact this,
+  },
+  simp [sub_ne_zero.2 hneq] at hxy,
+  transitivity (x^3 + a*x^2 + b*x + c) + (x^2+x*y+y^2 + a*(x+y) + b) * (-a-2*x-y),
+  { rw ← sub_eq_zero, ring, },
+  have := congr (congr_arg has_add.add hx) (congr_arg (λ f, f*(-a-2*x-y)) hxy),
+  rw [zero_mul, zero_add] at this,
+  exact this,
+end
+
 namespace weierstrass_equation
 
 -- ================
@@ -64,6 +97,39 @@ begin
   exact mul_eq_zero.1 h3,
 end
 
+namespace intersection_with_line
+
+section
+
+-- intersection of `y^2 + a1*x*y + a3*y = x^3 + a2*x^2 + a4*x + a6`
+-- and `y = A*x + B`
+parameters {K : Type*} [field K] (E : weierstrass_equation K)
+(A B : K)
+
+def a : K := E.a2 - A^2 - A*E.a1
+def b : K := E.a4 - 2*A*B - B*E.a1 - A*E.a3
+def c : K := E.a6 - B^2 - B*E.a3
+def eval_at (x : K) := x^3 + a*x^2 + b*x + c
+def is_on (x : K) : Prop := eval_at x = 0
+def is_on_2 (x : K) : Prop := 3*x^2 + 2*a*x + b = 0
+
+lemma eval_at_eq_eval_at (x : K)
+: eval_at x = -E.eval_at_affine_point ⟨ x, A*x+B ⟩ :=
+sub_eq_zero.1 begin
+  simp only [eval_at, a, b, c, eval_at_affine_point],
+  ring,
+end
+
+lemma is_on_iff_is_on (x : K)
+: is_on x ↔ E.affine_point_on_curve ⟨ x, A*x+B ⟩ :=
+begin
+  simp [is_on, affine_point_on_curve, eval_at_eq_eval_at],
+end
+
+end
+
+end intersection_with_line
+
 -- ================
 -- P ↦ -2*P
 -- ================
@@ -94,47 +160,75 @@ def neg_of_double_of_affine_plane_point
 ⟨ neg_of_double_of_affine_plane_point.x E P,
   neg_of_double_of_affine_plane_point.y E P ⟩
 
-/-
-sorry = -2*a1^4*a2*x^3 - a1^4*x^4 + 2*a1^5*x^2*y - 2*a1^3*a2*a3*x^2 -
-2*a1^4*a4*x^2 - 16*a1^2*a2^2*x^3 + 2*a1^3*a3*x^3 - 40*a1^2*a2*x^4 -
-22*a1^2*x^5 + 4*a1^4*a3*x*y + 16*a1^3*a2*x^2*y + 32*a1^3*x^3*y +
-2*a1^4*x*y^2 + 2*a1^2*a2*a3^2*x - 4*a1^3*a3*a4*x - 8*a1*a2^2*a3*x^2 +
-6*a1^2*a3^2*x^2 - 20*a1^2*a2*a4*x^2 - 32*a2^3*x^3 - 8*a1*a2*a3*x^3 -
-28*a1^2*a4*x^3 - 144*a2^2*x^4 + 10*a1*a3*x^4 - 216*a2*x^5 - 108*x^6 +
-2*a1^3*a3^2*y + 24*a1^2*a2*a3*x*y + 4*a1^3*a4*x*y + 32*a1*a2^2*x^2*y +
-48*a1^2*a3*x^2*y + 128*a1*a2*x^3*y + 128*a1*x^4*y + 2*a1^3*a3*y^2 +
-16*a1^2*a2*x*y^2 + 32*a1^2*x^2*y^2 + 2*a1*a2*a3^3 - 2*a1^2*a3^2*a4 +
-8*a2^2*a3^2*x + 2*a1*a3^3*x - 16*a1*a2*a3*a4*x - 6*a1^2*a4^2*x +
-32*a2*a3^2*x^2 - 48*a2^2*a4*x^2 - 20*a1*a3*a4*x^2 - 4*a1^2*a6*x^2 +
-32*a3^2*x^3 - 144*a2*a4*x^3 - 108*a4*x^4 + 8*a1*a2*a3^2*y +
-4*a1^2*a3*a4*y + 32*a2^2*a3*x*y + 12*a1*a3^2*x*y + 16*a1*a2*a4*x*y +
-128*a2*a3*x^2*y + 32*a1*a4*x^2*y + 128*a3*x^3*y + 8*a1*a2*a3*y^2 +
-4*a1^2*a4*y^2 + 32*a2^2*x*y^2 + 16*a1*a3*x*y^2 + 128*a2*x^2*y^2 +
-128*x^3*y^2 - a3^4 + 4*a2*a3^2*a4 - 6*a1*a3*a4^2 + 8*a3^2*a4*x -
-24*a2*a4^2*x - 8*a1*a3*a6*x - 36*a4^2*x^2 - 4*a3^3*y + 16*a2*a3*a4*y +
-32*a3*a4*x*y - 16*a1*a6*x*y - 4*a3^2*y^2 + 16*a2*a4*y^2 + 32*a4*x*y^2 -
-4*a4^3 - 4*a3^2*a6 - 16*a3*a6*y - 16*a6*y^2
--/
-
-lemma eval_at_affine_point.neg_of_double
-{K : Type*} [field K] (E : weierstrass_equation K)
-(P : affine_plane_point K) (hy : 2*P.y + E.a1*P.x + E.a3 ≠ 0)
-: E.eval_at_affine_point (E.neg_of_double_of_affine_plane_point P)
-= (E.eval_at_affine_point P) * sorry
-/ (2*P.y + E.a1*P.x + E.a3)^4
-:=
-begin
-  sorry,
-end
-
 lemma affine_point_on_curve.neg_of_double
 {K : Type*} [field K] (E : weierstrass_equation K)
 (P : affine_plane_point K) (h : E.affine_point_on_curve P)
 (hy : 2*P.y + E.a1*P.x + E.a3 ≠ 0)
 : E.affine_point_on_curve (E.neg_of_double_of_affine_plane_point P) :=
 begin
-  simp [affine_point_on_curve] at h ⊢,
-  rw [eval_at_affine_point.neg_of_double E P hy, h, zero_mul, zero_div],
+  set! A := (neg_of_double_of_affine_plane_point.A E P)/(neg_of_double_of_affine_plane_point.C E P) with hA, clear_value A,
+  set! B := (neg_of_double_of_affine_plane_point.B E P)/(neg_of_double_of_affine_plane_point.C E P) with hB, clear_value B,
+  have hC : neg_of_double_of_affine_plane_point.C E P = 2*P.y + E.a1*P.x + E.a3 := rfl,
+  have h1 : intersection_with_line.is_on E A B P.x := by {
+    rw intersection_with_line.is_on_iff_is_on E A B P.x,
+    have h5 : A * P.x + B = P.y := by {
+      simp only [hA, hB, neg_of_double_of_affine_plane_point.A,
+        neg_of_double_of_affine_plane_point.B, neg_of_double_of_affine_plane_point.C],
+      field_simp [hy],
+      rw ← sub_eq_zero,
+      simp only [affine_point_on_curve] at h,
+      transitivity -2*E.eval_at_affine_point P,
+      {
+        simp [eval_at_affine_point],
+        ring,
+      },
+      simp [h],
+    },
+    rw h5,
+    exact h,
+  },
+  have h2 : intersection_with_line.is_on_2 E A B P.x := by {
+    simp only [intersection_with_line.is_on_2,
+      intersection_with_line.a, intersection_with_line.b,
+      hA, hB],
+    rw ← hC at hy,
+    field_simp [pow_succ, hy],
+    transitivity neg_of_double_of_affine_plane_point.C E P ^ 5 * (P.x * neg_of_double_of_affine_plane_point.A E P ^ 2 * -2
+      + P.x * neg_of_double_of_affine_plane_point.C E P * neg_of_double_of_affine_plane_point.A E P * E.a1 * -2
+      + P.x * neg_of_double_of_affine_plane_point.C E P ^ 2 * E.a2 * 2
+      + P.x ^ 2 * neg_of_double_of_affine_plane_point.C E P ^ 2 * 3
+      + neg_of_double_of_affine_plane_point.A E P * neg_of_double_of_affine_plane_point.B E P * -2
+      + neg_of_double_of_affine_plane_point.C E P * neg_of_double_of_affine_plane_point.A E P * -E.a3
+      + neg_of_double_of_affine_plane_point.C E P * E.a1 * -neg_of_double_of_affine_plane_point.B E P
+      + neg_of_double_of_affine_plane_point.C E P ^ 2 * E.a4),
+    { rw ← sub_eq_zero, ring, },
+    simp [hy],
+    transitivity (2*E.a1^2*P.x + 2*E.a1*E.a3 + 8*E.a2*P.x + 12*P.x^2 + 4*E.a4) * E.eval_at_affine_point P,
+    {
+      simp only [neg_of_double_of_affine_plane_point.A,
+        neg_of_double_of_affine_plane_point.B, neg_of_double_of_affine_plane_point.C,
+        eval_at_affine_point],
+      rw ← sub_eq_zero, ring,
+    },
+    simp [affine_point_on_curve] at h,
+    simp [h],
+  },
+  have h3 := Vieta_formula_cubic_2 h1 h2,
+  have h4 : -intersection_with_line.a E A - 2 * P.x = (E.neg_of_double_of_affine_plane_point P).x := by {
+    simp [hA, neg_of_double_of_affine_plane_point,
+      neg_of_double_of_affine_plane_point.x,
+      intersection_with_line.a],
+    ring,
+  },
+  rw h4 at h3,
+  change intersection_with_line.is_on E A B (E.neg_of_double_of_affine_plane_point P).x at h3,
+  rw intersection_with_line.is_on_iff_is_on at h3,
+  have h5 : A * (E.neg_of_double_of_affine_plane_point P).x + B = (E.neg_of_double_of_affine_plane_point P).y := by {
+    rw [hA, hB],
+    refl,
+  },
+  rw [h5] at h3,
+  exact h3,
 end
 
 -- ================
@@ -205,7 +299,47 @@ lemma affine_point_on_curve.neg_of_add
 (hx : P1.x - P2.x ≠ 0)
 : E.affine_point_on_curve (E.neg_of_add_of_affine_plane_point P1 P2) :=
 begin
-  sorry,
+  have hx' := sub_ne_zero.2 (sub_ne_zero.1 hx).symm,
+  set! A := (neg_of_add_of_affine_plane_point.A P1 P2)/(neg_of_add_of_affine_plane_point.C P1 P2) with hA, clear_value A,
+  set! B := (neg_of_add_of_affine_plane_point.B P1 P2)/(neg_of_add_of_affine_plane_point.C P1 P2) with hB, clear_value B,
+  replace h1 : intersection_with_line.is_on E A B P1.x := by {
+    rw intersection_with_line.is_on_iff_is_on E A B P1.x,
+    have h5 : A * P1.x + B = P1.y := by {
+      simp only [hA, hB, neg_of_add_of_affine_plane_point.A,
+        neg_of_add_of_affine_plane_point.B, neg_of_add_of_affine_plane_point.C],
+      field_simp [hx, hx'],
+      ring,
+    },
+    rw h5,
+    exact h1,
+  },
+  replace h2 : intersection_with_line.is_on E A B P2.x := by {
+    rw intersection_with_line.is_on_iff_is_on E A B P2.x,
+    have h5 : A * P2.x + B = P2.y := by {
+      simp only [hA, hB, neg_of_add_of_affine_plane_point.A,
+        neg_of_add_of_affine_plane_point.B, neg_of_add_of_affine_plane_point.C],
+      field_simp [hx, hx'],
+      ring,
+    },
+    rw h5,
+    exact h2,
+  },
+  have h3 := Vieta_formula_cubic h1 h2 (sub_ne_zero.1 hx),
+  have h4 : -intersection_with_line.a E A - P1.x - P2.x = (E.neg_of_add_of_affine_plane_point P1 P2).x := by {
+    simp [hA, neg_of_add_of_affine_plane_point,
+      neg_of_add_of_affine_plane_point.x,
+      intersection_with_line.a],
+    ring,
+  },
+  rw h4 at h3,
+  change intersection_with_line.is_on E A B (E.neg_of_add_of_affine_plane_point P1 P2).x at h3,
+  rw intersection_with_line.is_on_iff_is_on at h3,
+  have h5 : A * (E.neg_of_add_of_affine_plane_point P1 P2).x + B = (E.neg_of_add_of_affine_plane_point P1 P2).y := by {
+    rw [hA, hB],
+    refl,
+  },
+  rw [h5] at h3,
+  exact h3,
 end
 
 namespace affine_point
