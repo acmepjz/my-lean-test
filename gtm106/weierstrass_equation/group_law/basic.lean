@@ -97,6 +97,27 @@ begin
   exact mul_eq_zero.1 h3,
 end
 
+lemma same_x_implies_same_or_neg'
+{K : Type*} [field K] {E : weierstrass_equation K}
+(P1 P2 : affine_plane_point K)
+(h1 : E.affine_point_on_curve P1)
+(h2 : E.affine_point_on_curve P2)
+(hx : P1.x - P2.x = 0)
+: P1 = P2 ∨ P1 = E.neg_of_affine_plane_point P2 :=
+begin
+  cases same_x_implies_same_or_neg P1 P2 h1 h2 hx with hy hy, {
+    left,
+    rw sub_eq_zero at hx hy,
+    simp [affine_plane_point.ext_iff, hx, hy],
+  },
+  right,
+  rw sub_eq_zero at hx,
+  replace hy := congr (congr_arg has_sub.sub (eq.refl P1.y)) hy.symm,
+  ring_nf at hy,
+  simp [neg_of_affine_plane_point, affine_plane_point.ext_iff, hx, hy],
+  ring,
+end
+
 namespace intersection_with_line
 
 section
@@ -396,9 +417,29 @@ match P1, P2 with
 }
 end
 
+end affine_point
+
 -- ================
 -- (P1, P2) ↦ P1 + P2
 -- ================
+
+/--
+NOTE: P should not be a 2-torsion, otherwise the result is incorrect
+-/
+def double_of_affine_plane_point
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K) : affine_plane_point K :=
+E.neg_of_affine_plane_point (E.neg_of_double_of_affine_plane_point P)
+
+/--
+NOTE: P1.x and P2.x should be different, otherwise the result is incorrect
+-/
+def add_of_affine_plane_point
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P1 P2 : affine_plane_point K) : affine_plane_point K :=
+E.neg_of_affine_plane_point (E.neg_of_add_of_affine_plane_point P1 P2)
+
+namespace affine_point
 
 noncomputable def add
 {K : Type*} [field K] {E : weierstrass_equation K}
@@ -474,25 +515,6 @@ match P with
   simp [h, neg],
 }
 end
-
-lemma add.assoc
-{K : Type*} [field K] {E : weierstrass_equation K}
-(P1 P2 P3 : affine_point E)
-: (P1.add P2).add P3 = P1.add (P2.add P3) :=
-begin
-  unfold add,
-  congr' 1,
-  sorry,
-end
-
-noncomputable instance to_add_comm_group
-{K : Type*} [field K] (E : weierstrass_equation K)
-: add_comm_group (affine_point E)
-:= ⟨ add, add.assoc, infinite,
-  add.zero_add, add.add_zero, neg,
-  (λ P1 P2, P1.add P2.neg), by {
-    intros _ _, simp only [has_add.add, add_zero_class.add],
-  }, add.add_left_neg, add.comm ⟩
 
 end affine_point
 
