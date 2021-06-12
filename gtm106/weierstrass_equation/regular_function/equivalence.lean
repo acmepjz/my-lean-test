@@ -26,7 +26,9 @@ lemma to_regular_function_ring.map_mul' {K : Type*} [comm_ring K]
 {E : weierstrass_equation K} (f g : regular_function_ring' E)
 : (@to_regular_function_ring.to_fun K _ E (mul f g)) = (@to_regular_function_ring.to_fun K _ E f) * (@to_regular_function_ring.to_fun K _ E g) :=
 begin
-  have h : regular_function_ring.x ^ 3 + regular_function_ring.C E.a2 * regular_function_ring.x ^ 2 + regular_function_ring.C E.a4 * regular_function_ring.x + regular_function_ring.C E.a6 = 0,
+  have h : (@regular_function_ring.x K _ E) ^ 3 + regular_function_ring.C E.a2 * regular_function_ring.x ^ 2 + regular_function_ring.C E.a4 * regular_function_ring.x + regular_function_ring.C E.a6 = 0 := by {
+    sorry,
+  },
   -- simp [to_regular_function_ring.to_fun, mul],
   sorry,
 end
