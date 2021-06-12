@@ -127,6 +127,12 @@ inductive affine_point
 | infinite : affine_point
 | finite (P : affine_plane_point K) (h : E.affine_point_on_curve P) : affine_point
 
+def affine_point.regular
+{K : Type*} [comm_ring K] {E : weierstrass_equation K}
+: affine_point E → Prop
+| affine_point.infinite := true
+| (affine_point.finite P h) := E.affine_point_regular P
+
 def affine_point.base_change
 {K : Type*} [comm_ring K] {E : weierstrass_equation K}
 {L : Type*} [comm_ring L] (f : ring_hom K L)
@@ -409,6 +415,10 @@ Represents all projective points on curve
 structure projective_point
 {K : Type*} [field K] (E : weierstrass_equation K) :=
 mk :: (P : projective_plane_point K) (h : E.projective_point_on_curve P)
+
+def projective_point.regular
+{K : Type*} [field K] {E : weierstrass_equation K}
+(P : projective_point E) : Prop := E.projective_point_regular P.P
 
 def projective_point.base_change
 {K : Type*} [field K] {E : weierstrass_equation K}

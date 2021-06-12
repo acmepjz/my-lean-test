@@ -5,8 +5,7 @@ import gtm106.naive_plane
 import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.linear_change_of_variable
 import gtm106.weierstrass_equation.models_by_characteristic
-import myhelper.char
-import myhelper.perfect
+import myhelper.mypoly.char_and_perfect
 import tactic
 
 namespace weierstrass_equation
