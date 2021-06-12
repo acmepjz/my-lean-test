@@ -6,7 +6,6 @@ import algebra.char_zero
 import algebra.char_p
 import field_theory.separable
 import field_theory.algebraic_closure
-import field_theory.perfect_closure
 import myhelper.char
 import myhelper.perfect
 import tactic
