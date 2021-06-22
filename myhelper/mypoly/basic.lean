@@ -98,6 +98,13 @@ def has_multiple_root {K : Type*} [comm_ring K] (f : monic_quad_poly K)
 def disc {K : Type*} [comm_ring K] (f : monic_quad_poly K) : K
 := f.a^2 - 4*f.b
 
+lemma disc_scale {K : Type*} [comm_ring K] (f : monic_quad_poly K) (d : K)
+: disc ⟨ f.a*d, f.b*d^2 ⟩ = disc f * d^2 :=
+begin
+  simp only [disc],
+  ring,
+end
+
 lemma disc' {K : Type*} [comm_ring K] (f : monic_quad_poly K) (x : K)
 : f.disc = (f.eval_dx_at x) ^ 2 - 4 * f.eval_at x :=
 begin
@@ -327,6 +334,13 @@ def has_multiple_root {K : Type*} [comm_ring K] (f : monic_cubic_poly K)
 
 def disc {K : Type*} [comm_ring K] (f : monic_cubic_poly K) : K
 := -4*f.a^3*f.c + f.a^2*f.b^2 - 4*f.b^3 - 27*f.c^2 + 18*f.a*f.b*f.c
+
+lemma disc_scale {K : Type*} [comm_ring K] (f : monic_cubic_poly K) (d : K)
+: disc ⟨ f.a*d, f.b*d^2, f.c*d^3 ⟩ = disc f * d^6 :=
+begin
+  simp only [disc],
+  ring,
+end
 
 lemma disc' {K : Type*} [comm_ring K] (f : monic_cubic_poly K) (x : K)
 : f.disc = f.eval_at x * (-3*(2*f.a^2 - 6*f.b)*x + (-4*f.a^3 + 15*f.a*f.b - 27*f.c))

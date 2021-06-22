@@ -1,7 +1,10 @@
 import algebra.field
 import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.point
+import gtm106.weierstrass_equation.non_singular_criterion
+import gtm106.weierstrass_equation.linear_change_of_variable
 import gtm106.weierstrass_equation.group_law.basic
+import gtm106.weierstrass_equation.group_law.linear_change_of_variable
 import tactic
 
 namespace weierstrass_equation
@@ -236,20 +239,179 @@ end affine_point
 
 namespace intersection_with_line
 
-lemma disc_zero_iff {K : Type*} [field K] (E : weierstrass_equation K)
+lemma disc_zero_implies_tangent_or_through_singular_point.p00
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K)
+(hP' : P = ⟨ 0, 0 ⟩)
+(A : K)
+(hP : E.affine_point_on_curve P)
+(h : monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ = 0)
+: neg_of_double_of_affine_plane_point.A E P = A * neg_of_double_of_affine_plane_point.C E P
+∨ ∃ (Q : affine_plane_point K), E.affine_point_singular Q ∧ Q.x ≠ 0 ∧ Q.y = A * Q.x :=
+begin
+  simp [affine_point_on_curve, eval_at_affine_point, hP', zero_pow] at hP,
+  simp only [neg_of_double_of_affine_plane_point.A,
+    neg_of_double_of_affine_plane_point.C],
+  simp only [monic_cubic_poly.disc, a, b, c, B, hP] at h,
+  simp [hP', zero_pow] at h ⊢,
+  have : (E.a2 - (A + E.a1) * A) ^ 2 * (E.a4 - A * E.a3) ^ 2 - 4 * (E.a4 - A * E.a3) ^ 3
+  = ((E.a2 - (A + E.a1) * A) ^ 2 - 4 * (E.a4 - A * E.a3)) * (E.a4 - A * E.a3) ^ 2 := by {
+    ring,
+  },
+  rw this at h, clear this,
+  simp at h,
+  by_cases h1 : E.a4 - A * E.a3 = 0, {
+    left,
+    exact sub_eq_zero.1 h1,
+  },
+  right,
+  simp [h1] at h,
+  sorry,
+end
+
+lemma disc_zero_implies_tangent_or_through_singular_point
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K)
+(A : K)
+(hP : E.affine_point_on_curve P)
+(h : monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ = 0)
+: neg_of_double_of_affine_plane_point.A E P = A * neg_of_double_of_affine_plane_point.C E P
+∨ ∃ (Q : affine_plane_point K), E.affine_point_singular Q ∧ Q.x ≠ P.x ∧ Q.y - P.y = A * (Q.x - P.x) :=
+begin
+  set! C : linear_change_of_variable K := ⟨ 1, P.x, 0, P.y, by simp ⟩ with hC, clear_value C,
+  set! E' := C.change_curve E with hE', clear_value E',
+  set! P' := C.change_affine_point P with hP', clear_value P',
+  replace h : monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ / C.u ^ 12 = 0 := by {
+    simp [h],
+  },
+  rw [← disc_lcov E P A C, ← hE', ← hP'] at h,
+  rw [C.preserve_affine_point E P, ← hE', ← hP'] at hP,
+  have hA : A_lcov A C = A := by {
+    simp [A_lcov, hC],
+  },
+  rw hA at h,
+  cases disc_zero_implies_tangent_or_through_singular_point.p00 E' P' (by {
+    simp [hP', hC, linear_change_of_variable.change_affine_point],
+  }) A hP h with h h, {
+    left,
+    simp [hE', hP', hC] at h,
+    exact h,
+  },
+  right,
+  rcases h with ⟨ Q', ⟨ h1, h2, h3 ⟩ ⟩,
+  use C.inverse.change_affine_point Q',
+  rw [← linear_change_of_variable.change_affine_point.id Q',
+    ← linear_change_of_variable.comp_inv C,
+    ← linear_change_of_variable.change_affine_point.comp, hE',
+    ← linear_change_of_variable.preserve_affine_singular_point] at h1,
+  use h1,
+  simp [linear_change_of_variable.change_affine_point,
+    linear_change_of_variable.inverse, hC],
+  exact ⟨ h2, h3 ⟩,
+end
+
+lemma tangent_implies_disc_zero.p00
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K)
+(hP' : P = ⟨ 0, 0 ⟩)
+(A : K)
+(hP : E.affine_point_on_curve P)
+(h : neg_of_double_of_affine_plane_point.A E P = A * neg_of_double_of_affine_plane_point.C E P)
+: monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ = 0 :=
+begin
+  simp [affine_point_on_curve, eval_at_affine_point, hP', zero_pow] at hP,
+  simp only [neg_of_double_of_affine_plane_point.A,
+    neg_of_double_of_affine_plane_point.C] at h,
+  simp only [monic_cubic_poly.disc, a, b, c, B, hP],
+  simp [hP', zero_pow] at h ⊢,
+  rw h,
+  ring,
+end
+
+lemma tangent_implies_disc_zero
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K)
+(A : K)
+(hP : E.affine_point_on_curve P)
+(h : neg_of_double_of_affine_plane_point.A E P = A * neg_of_double_of_affine_plane_point.C E P)
+: monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ = 0 :=
+begin
+  set! C : linear_change_of_variable K := ⟨ 1, P.x, 0, P.y, by simp ⟩ with hC, clear_value C,
+  set! E' := C.change_curve E with hE', clear_value E',
+  set! P' := C.change_affine_point P with hP', clear_value P',
+  suffices : monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ / C.u ^ 12 = 0, {
+    simp only [hC, one_pow, div_one] at this,
+    exact this,
+  },
+  rw [← disc_lcov E P A C, ← hE', ← hP'],
+  rw [C.preserve_affine_point E P, ← hE', ← hP'] at hP,
+  have hA : A_lcov A C = A := by {
+    simp [A_lcov, hC],
+  },
+  rw hA,
+  apply tangent_implies_disc_zero.p00 E' P' (by {
+    simp [hP', hC, linear_change_of_variable.change_affine_point],
+  }) A hP,
+  simp [hE', hP'],
+  simp [h, hC],
+end
+
+lemma through_singular_point_implies_disc_zero
+{K : Type*} [field K] (E : weierstrass_equation K)
+(P : affine_plane_point K)
+(A : K)
+(Q : affine_plane_point K)
+(hQ : E.affine_point_singular Q)
+(h : Q.y - P.y = A * (Q.x - P.x))
+: monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ = 0 :=
+begin
+  set! C : linear_change_of_variable K := ⟨ 1, Q.x, 0, Q.y, by simp ⟩ with hC, clear_value C,
+  set! E' := C.change_curve E with hE', clear_value E',
+  set! P' := C.change_affine_point P with hP', clear_value P',
+  set! Q' := C.change_affine_point Q with hQ', clear_value Q',
+  suffices : monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ / C.u ^ 12 = 0, {
+    simp only [hC, one_pow, div_one] at this,
+    exact this,
+  },
+  rw [← disc_lcov E P A C, ← hE', ← hP'],
+  rw [linear_change_of_variable.preserve_affine_singular_point E C Q,
+    ← hE', ← hQ'] at hQ,
+  have hA : A_lcov A C = A := by {
+    simp [A_lcov, hC],
+  },
+  rw hA,
+  replace h : P'.y = A * P'.x := by {
+    rw [← sub_eq_zero, sub_sub, sub_eq_zero] at h,
+    simp [hP', linear_change_of_variable.change_affine_point, hC],
+    rw h,
+    ring,
+  },
+  replace hQ' : Q' = ⟨ 0, 0 ⟩ := by {
+    simp [hQ', linear_change_of_variable.change_affine_point, hC],
+  },
+  simp only [affine_point_singular, affine_point_on_curve,
+    eval_at_affine_point, eval_dx_at_affine_point, eval_dy_at_affine_point, hQ'] at hQ,
+  simp [zero_pow] at hQ,
+  simp only [monic_cubic_poly.disc, a, b, c, B, hQ.1, hQ.2.1, hQ.2.2, h],
+  ring,
+end
+
+lemma disc_zero_iff_tangent_or_through_singular_point {K : Type*} [field K] (E : weierstrass_equation K)
 (P : affine_plane_point K)
 (A : K)
 (hP : E.affine_point_on_curve P)
 : monic_cubic_poly.disc ⟨ a E A, b E P A, c E P A ⟩ = 0
-↔ neg_of_double_of_affine_plane_point.C E P = A * neg_of_double_of_affine_plane_point.A E P :=
+↔ neg_of_double_of_affine_plane_point.A E P = A * neg_of_double_of_affine_plane_point.C E P
+∨ ∃ (Q : affine_plane_point K), E.affine_point_singular Q ∧ Q.x ≠ P.x ∧ Q.y - P.y = A * (Q.x - P.x) :=
 begin
-  sorry,
-  simp only [neg_of_double_of_affine_plane_point.A,
-    neg_of_double_of_affine_plane_point.C,
-    monic_cubic_poly.disc, a, b, c, B],
-  split,
-  { sorry, },
-  sorry,
+  split, {
+    exact disc_zero_implies_tangent_or_through_singular_point E P A hP,
+  },
+  intro h,
+  rcases h with h | ⟨ Q, h ⟩, {
+    exact tangent_implies_disc_zero E P A hP h,
+  },
+  exact through_singular_point_implies_disc_zero E P A Q h.1 h.2.2,
 end
 
 end intersection_with_line
