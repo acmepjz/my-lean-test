@@ -1,6 +1,7 @@
 import algebra.field
 import gtm106.weierstrass_equation.basic
 import gtm106.weierstrass_equation.point
+import gtm106.weierstrass_equation.intersection_with_line
 import myhelper.mypoly.basic
 import tactic
 
@@ -102,52 +103,6 @@ begin
 end
 
 -- ================
--- Intersection with line
--- ================
-
-namespace intersection_with_line
-
-section
-
--- intersection of `y^2 + a1*x*y + a3*y = x^3 + a2*x^2 + a4*x + a6`
--- and `y - y0 = A*(x - x0)`
-parameters {K : Type*} [field K] (E : weierstrass_equation K)
-(P : affine_plane_point K)
-(A : K)
-
-def B : K := P.y - A*P.x
-def a : K := E.a2 - (A + E.a1)*A
-def b : K := E.a4 - (2*A + E.a1)*B - A*E.a3
-def c : K := E.a6 - (B + E.a3)*B
-def eval_at (x : K) := monic_cubic_poly.eval_at ⟨ a, b, c ⟩ x
-def is_on (x : K) : Prop := eval_at x = 0
-def is_on_2 (x : K) : Prop := monic_cubic_poly.eval_dx_at ⟨ a, b, c ⟩ x = 0
-
-lemma eval_at_eq_eval_at (x : K)
-: eval_at x = -E.eval_at_affine_point ⟨ x, A*x+B ⟩ :=
-sub_eq_zero.1 begin
-  simp only [eval_at, monic_cubic_poly.eval_at, a, b, c, eval_at_affine_point],
-  ring,
-end
-
-lemma is_on_iff_is_on (x : K)
-: is_on x ↔ E.affine_point_on_curve ⟨ x, A*x+B ⟩ :=
-begin
-  simp [is_on, affine_point_on_curve, eval_at_eq_eval_at],
-end
-
-lemma is_on_this (h : E.affine_point_on_curve P) : is_on P.x :=
-begin
-  rw is_on_iff_is_on,
-  simp [B],
-  exact h,
-end
-
-end
-
-end intersection_with_line
-
--- ================
 -- P ↦ -2*P
 -- ================
 
@@ -163,6 +118,12 @@ def A : K := 3*P.x^2 + 2*E.a2*P.x + E.a4 - E.a1*P.y
 def C : K := 2*P.y + E.a1*P.x + E.a3
 def x : K := (A/C + E.a1)*(A/C) - E.a2 - 2*P.x -- we avoid using (A/C)^2
 def y : K := P.y + (x - P.x)*(A/C) -- we avoid using B
+
+def iwl : intersection_with_line K := intersection_with_line.from_point E P (A/C)
+
+@[simp]
+lemma iwl_E
+: iwl.E = E := rfl
 
 lemma A1 : A = - E.eval_dx_at_affine_point P :=
 sub_eq_zero.1 begin
@@ -204,6 +165,38 @@ sub_eq_zero.1 begin
   },
   unfold affine_point_on_curve at h,
   simp [h],
+end
+
+lemma iwl_x0 (h : E.affine_point_on_curve P) (hC : C ≠ 0)
+: iwl.poly.is_multiple_root P.x :=
+begin
+  unfold iwl,
+  rw [intersection_with_line.is_on_2', intersection_with_line.point_this],
+  simp [h, A1, ← C1, hC],
+end
+
+lemma iwl_x'
+: x = - iwl.poly.a - 2 * P.x :=
+begin
+  simp only [iwl, intersection_with_line.from_point,
+    intersection_with_line.poly,
+    intersection_with_line.a, x],
+  ring,
+end
+
+lemma iwl_x1 (h : E.affine_point_on_curve P) (hC : C ≠ 0)
+: iwl.poly.is_root x :=
+begin
+  rw iwl_x',
+  exact (iwl E P).poly.vieta_2 _ (iwl_x0 E P h hC),
+end
+
+lemma iwl_p
+: iwl.point x = ⟨ x, y ⟩ :=
+begin
+  simp [iwl, intersection_with_line.from_point,
+    intersection_with_line.point, y],
+  ring,
 end
 
 end
@@ -267,36 +260,15 @@ lemma affine_point_on_curve.neg_of_double
 (hy : 2*P.y + E.a1*P.x + E.a3 ≠ 0)
 : E.affine_point_on_curve (E.neg_of_double_of_affine_plane_point P) :=
 begin
-  set! A := (neg_of_double_of_affine_plane_point.A E P)/(neg_of_double_of_affine_plane_point.C E P) with hA, clear_value A,
-  have hC : neg_of_double_of_affine_plane_point.C E P = 2*P.y + E.a1*P.x + E.a3 := rfl,
-  have h1 : intersection_with_line.is_on E P A P.x := intersection_with_line.is_on_this E P A h,
-  have h2 : intersection_with_line.is_on_2 E P A P.x := by {
-    simp only [intersection_with_line.is_on_2, monic_cubic_poly.eval_dx_at,
-      intersection_with_line.a, intersection_with_line.b, intersection_with_line.B,
-      hA],
-    rw ← hC at hy,
-    field_simp [hy],
-    simp only [neg_of_double_of_affine_plane_point.A,
-      neg_of_double_of_affine_plane_point.C],
-    ring,
-  },
-  have h3 := monic_cubic_poly.vieta_2 _ P.x ⟨ h1, h2 ⟩,
-  have h4 : -intersection_with_line.a E A - 2 * P.x = (E.neg_of_double_of_affine_plane_point P).x := by {
-    simp only [hA, neg_of_double_of_affine_plane_point,
-      neg_of_double_of_affine_plane_point.x,
-      intersection_with_line.a],
-    ring,
-  },
-  rw h4 at h3,
-  change intersection_with_line.is_on E P A (E.neg_of_double_of_affine_plane_point P).x at h3,
-  rw intersection_with_line.is_on_iff_is_on at h3,
-  have h5 : A * (E.neg_of_double_of_affine_plane_point P).x + (intersection_with_line.B P A) = (E.neg_of_double_of_affine_plane_point P).y := by {
-    simp only [hA, intersection_with_line.B, neg_of_double_of_affine_plane_point,
-      neg_of_double_of_affine_plane_point.y],
-    ring,
-  },
-  rw [h5] at h3,
-  exact h3,
+  change neg_of_double_of_affine_plane_point.C E P ≠ 0 at hy,
+  unfold neg_of_double_of_affine_plane_point,
+  rw [← neg_of_double_of_affine_plane_point.iwl_p],
+  have h1 := intersection_with_line.is_on'
+    (neg_of_double_of_affine_plane_point.iwl E P)
+    (neg_of_double_of_affine_plane_point.x E P),
+  simp at h1,
+  rw ← h1,
+  exact neg_of_double_of_affine_plane_point.iwl_x1 E P h hy,
 end
 
 -- ================
@@ -315,6 +287,72 @@ def A : K := P1.y - P2.y
 def C : K := P1.x - P2.x
 def x : K := (A/C + E.a1)*(A/C) - E.a2 - P1.x - P2.x -- we avoid using (A/C)^2
 def y : K := P1.y + (x - P1.x)*(A/C) -- we avoid using B
+
+def iwl : intersection_with_line K := intersection_with_line.from_point E P1 (A/C)
+
+@[simp]
+lemma iwl_E
+: iwl.E = E := rfl
+
+lemma iwl_p1
+: iwl.point P1.x = P1 :=
+begin
+  unfold iwl,
+  exact intersection_with_line.point_this E P1 _,
+end
+
+lemma iwl_p2
+(hx : P1.x - P2.x ≠ 0)
+: iwl.point P2.x = P2 :=
+begin
+  simp [iwl, intersection_with_line.from_point,
+    intersection_with_line.point,
+    affine_plane_point.ext_iff, A, C],
+  field_simp [hx],
+  ring,
+end
+
+lemma iwl_p3
+(hx : P1.x - P2.x ≠ 0)
+: iwl.point x = ⟨ x, y ⟩ :=
+begin
+  simp [iwl, intersection_with_line.from_point,
+    intersection_with_line.point, y, A, C],
+  field_simp [hx],
+  ring,
+end
+
+lemma iwl_x1 (h : E.affine_point_on_curve P1)
+: iwl.poly.is_root P1.x :=
+begin
+  rw [intersection_with_line.is_on', iwl_p1],
+  exact h,
+end
+
+lemma iwl_x2 (h : E.affine_point_on_curve P2)
+(hx : P1.x - P2.x ≠ 0)
+: iwl.poly.is_root P2.x :=
+begin
+  rw [intersection_with_line.is_on', iwl_p2 E P1 P2 hx],
+  exact h,
+end
+
+lemma iwl_x'
+: x = - iwl.poly.a - P1.x - P2.x :=
+begin
+  simp [iwl, intersection_with_line.poly, intersection_with_line.a,
+    intersection_with_line.from_point, x],
+end
+
+lemma iwl_x3 (h1 : E.affine_point_on_curve P1)
+(h2 : E.affine_point_on_curve P2)
+(hx : P1.x - P2.x ≠ 0)
+: iwl.poly.is_root x :=
+begin
+  rw iwl_x',
+  exact (iwl E P1 P2).poly.vieta P1.x P2.x (iwl_x1 E P1 P2 h1)
+    (iwl_x2 E P1 P2 h2 hx) (sub_ne_zero.1 hx),
+end
 
 lemma y' (hC : C ≠ 0) : y = P2.y + (x - P2.x)*(A/C) :=
 begin
@@ -457,37 +495,14 @@ lemma affine_point_on_curve.neg_of_add
 (hx : P1.x - P2.x ≠ 0)
 : E.affine_point_on_curve (E.neg_of_add_of_affine_plane_point P1 P2) :=
 begin
-  have hx' := sub_ne_zero.2 (sub_ne_zero.1 hx).symm,
-  set! A := (neg_of_add_of_affine_plane_point.A P1 P2)/(neg_of_add_of_affine_plane_point.C P1 P2) with hA, clear_value A,
-  replace h1 : intersection_with_line.is_on E P1 A P1.x := intersection_with_line.is_on_this E P1 A h1,
-  replace h2 : intersection_with_line.is_on E P1 A P2.x := by {
-    rw intersection_with_line.is_on_iff_is_on,
-    have h5 : A * P2.x + intersection_with_line.B P1 A = P2.y := by {
-      simp only [hA, intersection_with_line.B, neg_of_add_of_affine_plane_point.A,
-        neg_of_add_of_affine_plane_point.C],
-      field_simp [hx, hx'],
-      ring,
-    },
-    rw h5,
-    exact h2,
-  },
-  have h3 := monic_cubic_poly.vieta _ _ _ h1 h2 (sub_ne_zero.1 hx),
-  have h4 : -intersection_with_line.a E A - P1.x - P2.x = (E.neg_of_add_of_affine_plane_point P1 P2).x := by {
-    simp only [hA, neg_of_add_of_affine_plane_point,
-      neg_of_add_of_affine_plane_point.x,
-      intersection_with_line.a],
-    ring,
-  },
-  rw h4 at h3,
-  change intersection_with_line.is_on E P1 A (E.neg_of_add_of_affine_plane_point P1 P2).x at h3,
-  rw intersection_with_line.is_on_iff_is_on at h3,
-  have h5 : A * (E.neg_of_add_of_affine_plane_point P1 P2).x + intersection_with_line.B P1 A = (E.neg_of_add_of_affine_plane_point P1 P2).y := by {
-    simp only [hA, intersection_with_line.B, neg_of_add_of_affine_plane_point,
-      neg_of_add_of_affine_plane_point.y],
-    ring,
-  },
-  rw [h5] at h3,
-  exact h3,
+  unfold neg_of_add_of_affine_plane_point,
+  rw [← neg_of_add_of_affine_plane_point.iwl_p3 E P1 P2 hx],
+  have h := intersection_with_line.is_on'
+    (neg_of_add_of_affine_plane_point.iwl E P1 P2)
+    (neg_of_add_of_affine_plane_point.x E P1 P2),
+  simp at h,
+  rw ← h,
+  exact neg_of_add_of_affine_plane_point.iwl_x3 E P1 P2 h1 h2 hx,
 end
 
 namespace affine_point

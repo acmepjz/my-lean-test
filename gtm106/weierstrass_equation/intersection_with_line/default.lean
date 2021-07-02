@@ -1,0 +1,3 @@
+import gtm106.weierstrass_equation.intersection_with_line.basic
+import gtm106.weierstrass_equation.intersection_with_line.linear_change_of_variable
+import gtm106.weierstrass_equation.intersection_with_line.disc_zero
